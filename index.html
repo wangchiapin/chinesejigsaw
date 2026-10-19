@@ -69,16 +69,27 @@
     z-index: 20;
   }
   #win.hidden { display: none; }
-  #settings {
-    position: absolute; top: 10px; right: 14px; width: 270px;
-    background: #1f2d3a; color: #fff; border-radius: 10px;
-    padding: 12px 16px 14px; z-index: 15;
-    box-shadow: 0 8px 28px rgba(0,0,0,.5); font-size: .9rem;
+  small { display: block; font-size: .68em; font-weight: 400; opacity: .8; line-height: 1.2; }
+  header [data-i] { display: inline-block; text-align: center; line-height: 1.2; }
+  header h1[data-i] { text-align: left; display: block; }
+  #settingsOv {
+    position: absolute; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center; z-index: 30;
   }
-  #settings.hidden { display: none; }
-  #settings h3 { margin: 0 0 10px; font-size: 1rem; }
-  #settings .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
-  #settings .note { font-size: .78rem; color: #b9c6d3; line-height: 1.4; margin: 2px 0 6px 24px; }
+  #settingsOv.hidden { display: none; }
+  .panel {
+    background: #1f2d3a; color: #fff; border-radius: 14px;
+    padding: 18px 22px 20px; width: min(440px, 92vw); max-height: 92%; overflow: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+  }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .sg { margin: 14px 0 0; }
+  .sg-label { font-size: .85rem; color: #b9c6d3; margin-bottom: 6px; }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button { flex: 1; min-width: 78px; padding: 7px 8px; line-height: 1.2; text-align: center; }
+  .seg button.active { background: #2e86de; border-color: #2e86de; }
+  .note { font-size: .78rem; color: #b9c6d3; line-height: 1.4; margin-top: 6px; }
+  .panel .done { margin-top: 18px; width: 100%; padding: 9px; }
   #win .card {
     background: #fff; border-radius: 14px; padding: 28px 40px;
     text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4);
@@ -93,14 +104,6 @@
 <header>
   <h1 data-i="title"></h1>
   <div class="controls">
-    <label><span data-i="lang"></span>
-      <select id="selLang">
-        <option value="zh-TW">繁體中文</option>
-        <option value="zh-CN">简体中文</option>
-        <option value="en">English</option>
-        <option value="es">Español</option>
-      </select>
-    </label>
     <label><span data-i="text"></span>
       <input type="text" id="inText" maxlength="20" value="快樂拼圖遊戲好好玩">
     </label>
@@ -122,17 +125,13 @@
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="status"></div>
-  <div id="settings" class="hidden">
-    <h3>⚙️ <span data-i="settings"></span></h3>
-    <label class="row"><input type="checkbox" id="chkPinyin"> <span data-i="pinyin"></span></label>
-    <div class="note" id="pinyinMsg"></div>
-    <label class="row"><span data-i="snap"></span>
-      <select id="selSnap">
-        <option value="weak" data-i="snapWeak"></option>
-        <option value="mid" data-i="snapMid"></option>
-        <option value="strong" data-i="snapStrong"></option>
-      </select>
-    </label>
+  <div id="settingsOv" class="hidden">
+    <div class="panel">
+      <h3>⚙️ <span data-i="settings"></span></h3>
+      <div id="settingsBody"></div>
+      <div class="note" id="pinyinMsg"></div>
+      <button id="settingsDone" class="primary done" data-i="done"></button>
+    </div>
   </div>
   <div id="win" class="hidden">
     <div class="card">
@@ -176,21 +175,28 @@
       winTitle:'🎉 ¡Completado!', winMsg:'Tiempo: ', again:'Jugar otra vez', close:'Ver resultado' }
   };
   const I18N_EXTRA = {
-    'zh-TW': { settings:'設定', pinyin:'在字上方顯示拼音', pinyinNote:'下一局（開始新遊戲）才會套用。需要網路載入拼音資料。',
-      pinyinLoading:'拼音資料載入中…', pinyinReady:'拼音資料已就緒，開始新遊戲後套用。', pinyinFail:'拼音資料載入失敗，請確認網路後再試。',
-      snap:'接合吸力', snapWeak:'弱（要放得很準）', snapMid:'中', snapStrong:'強（靠近就吸住）' },
-    'zh-CN': { settings:'设置', pinyin:'在字上方显示拼音', pinyinNote:'下一局（开始新游戏）才会套用。需要网络加载拼音数据。',
-      pinyinLoading:'拼音数据加载中…', pinyinReady:'拼音数据已就绪，开始新游戏后套用。', pinyinFail:'拼音数据加载失败，请确认网络后再试。',
-      snap:'接合吸力', snapWeak:'弱（要放得很准）', snapMid:'中', snapStrong:'强（靠近就吸住）' },
-    'en': { settings:'Settings', pinyin:'Show pinyin above characters', pinyinNote:'Applies from the next game. Needs internet to load pinyin data.',
-      pinyinLoading:'Loading pinyin data…', pinyinReady:'Pinyin ready. It applies when you start a new game.', pinyinFail:'Could not load pinyin data. Check your connection and try again.',
-      snap:'Snap strength', snapWeak:'Weak (place precisely)', snapMid:'Medium', snapStrong:'Strong (snaps when close)' },
-    'es': { settings:'Ajustes', pinyin:'Mostrar pinyin sobre los caracteres', pinyinNote:'Se aplica en la próxima partida. Necesita internet para cargar el pinyin.',
-      pinyinLoading:'Cargando pinyin…', pinyinReady:'Pinyin listo. Se aplica al iniciar una nueva partida.', pinyinFail:'No se pudo cargar el pinyin. Revisa tu conexión e inténtalo de nuevo.',
-      snap:'Fuerza de encaje', snapWeak:'Baja (colocar con precisión)', snapMid:'Media', snapStrong:'Alta (encaja al acercar)' }
+    'zh-TW': { settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者',
+      poolHint:'拖曳整理・滾輪捲動',
+      phonNote:'拼音／注音從下一局（開始新遊戲）才會套用，需要網路載入資料。',
+      pinyinLoading:'拼音資料載入中…', pinyinReady:'資料已就緒，開始新遊戲後套用。', pinyinFail:'資料載入失敗，請確認網路後再試。',
+      snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'強', snapNote:'弱＝要放得很準；強＝靠近就吸住。' },
+    'zh-CN': { settings:'设置', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者',
+      poolHint:'拖曳整理・滚轮滚动',
+      phonNote:'拼音／注音从下一局（开始新游戏）才会套用，需要网络加载数据。',
+      pinyinLoading:'拼音数据加载中…', pinyinReady:'数据已就绪，开始新游戏后套用。', pinyinFail:'数据加载失败，请确认网络后再试。',
+      snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'强', snapNote:'弱＝要放得很准；强＝靠近就吸住。' },
+    'en': { settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both',
+      poolHint:'Drag to sort · wheel to scroll',
+      phonNote:'Pinyin / zhuyin apply from the next game and need internet to load.',
+      pinyinLoading:'Loading data…', pinyinReady:'Ready. It applies when you start a new game.', pinyinFail:'Could not load data. Check your connection and try again.',
+      snap:'Snap strength', snapWeak:'Weak', snapMid:'Medium', snapStrong:'Strong', snapNote:'Weak = place precisely; strong = snaps when close.' },
+    'es': { settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos',
+      poolHint:'Arrastra · rueda para desplazar',
+      phonNote:'El pinyin / zhuyin se aplica en la próxima partida y necesita internet.',
+      pinyinLoading:'Cargando datos…', pinyinReady:'Listo. Se aplica al iniciar una nueva partida.', pinyinFail:'No se pudieron cargar los datos. Revisa tu conexión.',
+      snap:'Fuerza de encaje', snapWeak:'Baja', snapMid:'Media', snapStrong:'Alta', snapNote:'Baja = colocar con precisión; alta = encaja al acercar.' }
   };
   Object.keys(I18N_EXTRA).forEach(k => Object.assign(I18N[k], I18N_EXTRA[k]));
-  let lang = 'zh-TW';
   const FONT = '"Noto Sans TC","Noto Sans SC","PingFang TC","PingFang SC","Microsoft JhengHei","Microsoft YaHei","Heiti TC",sans-serif';
   const DEFAULT_TEXT = '拼圖遊戲';
 
@@ -200,7 +206,7 @@
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
   const $ = id => document.getElementById(id);
-  const selLang = $('selLang'), inText = $('inText'), selGrid = $('selGrid');
+  const inText = $('inText'), selGrid = $('selGrid');
   const btnStart = $('btnStart'), btnTidy = $('btnTidy'), btnEdges = $('btnEdges');
   const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound');
   const timerEl = $('timer'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
@@ -213,16 +219,78 @@
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  /* ---------- 設定（拼音、吸力） ---------- */
-  const settings = { pinyin: false, snap: 'mid' };
+  /* ---------- 設定（字體、語言、拼音／注音、吸力） ---------- */
+  const SETTINGS_KEY = 'jigsaw_settings_v1';
+  const settings = { script: 'trad', lang: 'es', phon: 'none', snap: 'mid' };
   const SNAP = { weak: .18, mid: .28, strong: .40 };
-  const settingsEl = $('settings'), btnSet = $('btnSet');
-  const chkPinyin = $('chkPinyin'), selSnap = $('selSnap'), pinyinMsg = $('pinyinMsg');
-  let pinyinMsgKey = 'pinyinNote';
-  function setPinyinMsg(key) {
-    pinyinMsgKey = key;
-    pinyinMsg.textContent = I18N[lang][key];
+  const OK = { script: ['trad', 'simp'], lang: ['es', 'en'], phon: ['none', 'pinyin', 'zhuyin', 'both'], snap: ['weak', 'mid', 'strong'] };
+  try {
+    const sv = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    Object.keys(OK).forEach(k => { if (OK[k].includes(sv[k])) settings[k] = sv[k]; });
+  } catch (e) { /* 沒有儲存也沒關係 */ }
+  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ } }
+
+  const settingsOv = $('settingsOv'), btnSet = $('btnSet'), pinyinMsg = $('pinyinMsg');
+  const zhKey = () => settings.script === 'simp' ? 'zh-CN' : 'zh-TW';
+  // 中文一行＋所選外語一行
+  function bi(key) { return [I18N[zhKey()][key], I18N[settings.lang][key]]; }
+  function T(key) {
+    const [z, o] = bi(key);
+    if (o === undefined || o === z) return z;
+    if (z === undefined) return o;
+    return z + ' · ' + o;
   }
+  function setBi(el, key, suffix) {
+    const [z, o] = bi(key);
+    suffix = suffix || '';
+    el.textContent = z + suffix;
+    if (o && o !== z) {
+      const s = document.createElement('small');
+      s.textContent = o + suffix;
+      el.appendChild(s);
+    }
+  }
+
+  /* ---------- 拼音 → 注音 ---------- */
+  const ZY_INIT = { b:'ㄅ',p:'ㄆ',m:'ㄇ',f:'ㄈ',d:'ㄉ',t:'ㄊ',n:'ㄋ',l:'ㄌ',g:'ㄍ',k:'ㄎ',h:'ㄏ',
+    j:'ㄐ',q:'ㄑ',x:'ㄒ',zh:'ㄓ',ch:'ㄔ',sh:'ㄕ',r:'ㄖ',z:'ㄗ',c:'ㄘ',s:'ㄙ' };
+  const ZY_FINAL = { a:'ㄚ',o:'ㄛ',e:'ㄜ',ai:'ㄞ',ei:'ㄟ',ao:'ㄠ',ou:'ㄡ',an:'ㄢ',en:'ㄣ',ang:'ㄤ',eng:'ㄥ',
+    ong:'ㄨㄥ',er:'ㄦ',i:'ㄧ',ia:'ㄧㄚ',io:'ㄧㄛ',ie:'ㄧㄝ',iao:'ㄧㄠ',iou:'ㄧㄡ',ian:'ㄧㄢ',in:'ㄧㄣ',
+    iang:'ㄧㄤ',ing:'ㄧㄥ',iong:'ㄩㄥ',u:'ㄨ',ua:'ㄨㄚ',uo:'ㄨㄛ',uai:'ㄨㄞ',uei:'ㄨㄟ',uan:'ㄨㄢ',
+    uen:'ㄨㄣ',uang:'ㄨㄤ',ueng:'ㄨㄥ','ü':'ㄩ','üe':'ㄩㄝ','üan':'ㄩㄢ','ün':'ㄩㄣ' };
+  const ZY_TONE = ['', 'ˊ', 'ˇ', 'ˋ'];
+  // 輸入像 "zhong1"、"nü3"、"de0"（0 或沒有數字＝輕聲），輸出注音；轉不出來就回傳 ''
+  function toZhuyin(py) {
+    let m = /^([a-zü]+?)([0-5]?)$/.exec((py || '').toLowerCase().replace(/v/g, 'ü'));
+    if (!m) return '';
+    let s = m[1], tone = m[2] === '' ? 0 : +m[2];
+    let ini = '';
+    if (s.startsWith('yi')) s = s.slice(1);
+    else if (s.startsWith('yu')) s = 'ü' + s.slice(2);
+    else if (s.startsWith('y')) s = 'i' + s.slice(1);
+    else if (s === 'wu') s = 'u';
+    else if (s.startsWith('w')) s = 'u' + s.slice(1);
+    else {
+      const two = s.slice(0, 2);
+      if (two === 'zh' || two === 'ch' || two === 'sh') ini = two;
+      else if (ZY_INIT[s[0]]) ini = s[0];
+      s = s.slice(ini.length);
+      if (ini && 'jqx'.includes(ini)) s = s.replace(/^u/, 'ü');
+      if (ini && (ini === 'n' || ini === 'l')) s = s.replace(/^ue$/, 'üe');
+      if (ini) s = s.replace(/^iu$/, 'iou').replace(/^ui$/, 'uei').replace(/^un$/, 'uen');
+    }
+    let fin;
+    if (s === '' || (s === 'i' && 'zh ch sh r z c s'.split(' ').includes(ini))) fin = '';
+    else if (ZY_FINAL[s] !== undefined) fin = ZY_FINAL[s];
+    else return '';
+    const body = (ZY_INIT[ini] || '') + fin;
+    if (!body) return '';
+    return tone === 0 || tone === 5 ? '˙' + body : body + ZY_TONE[tone - 1];
+  }
+
+  /* ---------- 拼音資料（需要網路） ---------- */
+  let pinyinMsgKey = 'phonNote';
+  function setPinyinMsg(key) { pinyinMsgKey = key; setBi(pinyinMsg, key); }
   let pinyinLoading = null;
   function loadPinyin() {
     if (window.pinyinPro) return Promise.resolve(true);
@@ -235,6 +303,54 @@
       document.head.appendChild(s);
     });
     return pinyinLoading;
+  }
+  function wantPhonetics() {
+    if (settings.phon === 'none') { setPinyinMsg('phonNote'); return; }
+    setPinyinMsg('pinyinLoading');
+    loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
+  }
+
+  /* ---------- 設定視窗（分段按鈕，和其他遊戲一樣） ---------- */
+  const SETTING_DEFS = [
+    { key: 'script', label: 'setScript', opts: [['trad', null, '繁體'], ['simp', null, '简体']] },
+    { key: 'lang', label: 'lang', opts: [['es', null, 'Español'], ['en', null, 'English']] },
+    { key: 'phon', label: 'setPhon', opts: [['none', 'phonNone'], ['pinyin', null, 'Pinyin'], ['zhuyin', null, 'ㄅㄆㄇ'], ['both', 'phonBoth']] },
+    { key: 'snap', label: 'snap', note: 'snapNote', opts: [['weak', 'snapWeak'], ['mid', 'snapMid'], ['strong', 'snapStrong']] }
+  ];
+  function renderSettings() {
+    const body = $('settingsBody');
+    body.innerHTML = '';
+    SETTING_DEFS.forEach(def => {
+      const g = document.createElement('div');
+      g.className = 'sg';
+      const lb = document.createElement('div');
+      lb.className = 'sg-label';
+      setBi(lb, def.label);
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      def.opts.forEach(([val, key, literal]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        if (key) { setBi(b, key); } else b.textContent = literal;
+        if (settings[def.key] === val) b.classList.add('active');
+        b.addEventListener('click', () => {
+          if (settings[def.key] === val) return;
+          settings[def.key] = val;
+          saveSettings();
+          if (def.key === 'phon') wantPhonetics();
+          applyUI();
+        });
+        seg.appendChild(b);
+      });
+      g.append(lb, seg);
+      if (def.note) {
+        const n = document.createElement('div');
+        n.className = 'note';
+        setBi(n, def.note);
+        g.appendChild(n);
+      }
+      body.appendChild(g);
+    });
   }
 
   /* ---------- 桌布紋理 ---------- */
@@ -311,7 +427,7 @@
     x.closePath();
   }
 
-  function makeImage(chars, S, py) {
+  function makeImage(chars, S, ann) {
     const c = document.createElement('canvas');
     c.width = c.height = Math.round(S * DPR);
     const x = c.getContext('2d');
@@ -357,7 +473,9 @@
     const y0 = (S - rowsN * cell) / 2;
     x.textAlign = 'center';
     x.textBaseline = 'middle';
-    const k = py ? .68 : .86;                       // 有拼音時字小一點，上方留位置
+    // 有拼音／注音時字小一點，上方留位置（一行或兩行）
+    const nl = ann ? (ann.py ? 1 : 0) + (ann.zy ? 1 : 0) : 0;
+    const k = [.86, .68, .56][nl];
     chars.forEach((ch, i) => {
       const r = Math.floor(i / perRow), cc = i % perRow;
       const inRow = (r === rowsN - 1) ? n - (rowsN - 1) * perRow : perRow;
@@ -366,7 +484,7 @@
       x.fillStyle = 'rgba(255,255,255,.55)';
       roundRect(x, cx - cell * .49, cy - cell * .49, cell * .98, cell * .98, cell * .12);
       x.fill();
-      const ty = cy + cell * (py ? .12 : .04);
+      const ty = cy + cell * [.04, .12, .17][nl];
       x.font = `900 ${cell * k}px ${FONT}`;
       x.lineJoin = 'round';
       x.lineWidth = cell * .08;
@@ -374,13 +492,22 @@
       x.strokeText(ch, cx, ty);
       x.fillStyle = `hsl(${(hue + 200 + i * 41) % 360},65%,28%)`;
       x.fillText(ch, cx, ty);
-      if (py && py[i] && py[i] !== ch) {
-        x.font = `700 ${cell * .2}px ${FONT}`;
-        x.lineWidth = cell * .05;
-        x.strokeStyle = '#fff';
-        x.strokeText(py[i], cx, cy - cell * .34, cell * .92);
-        x.fillStyle = '#1f2d3a';
-        x.fillText(py[i], cx, cy - cell * .34, cell * .92);
+      if (nl) {
+        const lines = [];
+        if (ann.py && ann.py[i] && ann.py[i] !== ch) lines.push(ann.py[i]);
+        if (ann.zy && ann.zy[i]) lines.push(ann.zy[i]);
+        const size = cell * (nl === 1 ? .2 : .15);
+        const ys = nl === 1 ? [-.34] : [-.40, -.25];
+        // 只有一行可寫時（例如沒有注音），放在第一行的位置
+        lines.forEach((txt, j) => {
+          const yy = cy + cell * ys[j + (nl === 2 && lines.length === 1 && !(ann.py && ann.py[i] && ann.py[i] !== ch) ? 1 : 0)];
+          x.font = `700 ${size}px ${FONT}`;
+          x.lineWidth = cell * .05;
+          x.strokeStyle = '#fff';
+          x.strokeText(txt, cx, yy, cell * .92);
+          x.fillStyle = '#1f2d3a';
+          x.fillText(txt, cx, yy, cell * .92);
+        });
       }
     });
     return c;
@@ -401,14 +528,17 @@
     const S = P * n;
     const m = Math.ceil(P * .3) + 3;
     const sw = P + 2 * m;
-    let py = null;
-    if (settings.pinyin && window.pinyinPro) {
+    let ann = null;
+    if (settings.phon !== 'none' && window.pinyinPro) {
       try {
-        py = window.pinyinPro.pinyin(chars.join(''), { type: 'array', toneType: 'symbol' });
-        if (!py || py.length !== chars.length) py = null;
-      } catch (err) { py = null; }
+        const str = chars.join('');
+        const py = settings.phon !== 'zhuyin' ? window.pinyinPro.pinyin(str, { type: 'array', toneType: 'symbol' }) : null;
+        const zy = settings.phon !== 'pinyin'
+          ? window.pinyinPro.pinyin(str, { type: 'array', toneType: 'num' }).map(toZhuyin) : null;
+        if ((!py || py.length === chars.length) && (!zy || zy.length === chars.length)) ann = { py, zy };
+      } catch (err) { ann = null; }
     }
-    const img = makeImage(chars, S, py);
+    const img = makeImage(chars, S, ann);
 
     // 邊的凸凹（相鄰兩片共用同一條邊，所以一定吻合）
     const rnd = () => ({ s: Math.random() < .5 ? 1 : -1, j: (Math.random() - .5) * .12 });
@@ -503,7 +633,6 @@
   /* ---------- 狀態列 ---------- */
   function updateStatus() {
     if (!G) return;
-    const t = I18N[lang];
     const cnt = new Map();
     let pc = 0;
     for (const p of G.pieces) {
@@ -511,7 +640,14 @@
       if (p.pool) pc++;
     }
     const big = Math.max(...cnt.values());
-    statusEl.textContent = `${t.largest}: ${big} / ${G.N}　${t.inPool}: ${pc}　${t.onTable}: ${G.N - pc}`;
+    const line = (i) => ['largest', 'inPool', 'onTable'].map((k, j) => {
+      const v = j === 0 ? `${big} / ${G.N}` : (j === 1 ? pc : G.N - pc);
+      return `${bi(k)[i]}: ${v}`;
+    }).join(i === 0 ? '　' : ' · ');
+    statusEl.innerHTML = '';
+    const l1 = document.createElement('div'); l1.textContent = line(0);
+    const l2 = document.createElement('small'); l2.textContent = line(1);
+    statusEl.append(l1, l2);
   }
 
   /* ---------- 繪圖 ---------- */
@@ -540,7 +676,6 @@
     if (noisePattern) { ctx.fillStyle = noisePattern; ctx.fillRect(0, 0, W, H); }
     if (!G) return;
 
-    const t = I18N[lang];
     const now = performance.now();
     let anim = false;
     const pw = G.poolW;
@@ -591,12 +726,21 @@
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.font = `bold 14px ${FONT}`;
-    ctx.fillText(`${t.pool} (${pc})`, 16, 20);
+    // 文字太長就縮小字級，直到放得進盒子寬度
+    const fit = (txt, px, weight, minPx) => {
+      let s = px;
+      for (; s > minPx; s -= .5) {
+        ctx.font = `${weight} ${s}px ${FONT}`;
+        if (ctx.measureText(txt).width <= pw - 32) break;
+      }
+      ctx.font = `${weight} ${s}px ${FONT}`;
+    };
+    const poolTitle = `${T('pool')} (${pc})`;
+    fit(poolTitle, 14, 'bold', 9);
+    ctx.fillText(poolTitle, 16, 20);
     ctx.fillStyle = 'rgba(255,255,255,.7)';
-    ctx.font = `10.5px ${FONT}`;
-    let hint = t.poolHint;
-    while (ctx.measureText(hint).width > pw - 32 && hint.length > 4) hint = hint.slice(0, -2);
+    const hint = T('poolHint');
+    fit(hint, 10.5, 'normal', 8);
     ctx.fillText(hint, 16, 35);
 
     // 捲軸
@@ -679,8 +823,6 @@
   /* ---------- 拖曳 ---------- */
   cv.addEventListener('pointerdown', e => {
     if (!G || e.button > 0) return;
-    settingsEl.classList.add('hidden');
-    btnSet.classList.remove('on');
     const [mx, my] = pos(e);
     const p = hit(mx, my);
     if (p) {
@@ -810,8 +952,7 @@
       G.done = true;
       G.elapsed = performance.now() - G.start;
       timerEl.textContent = '⏱ ' + fmt(G.elapsed);
-      const t = I18N[lang];
-      winMsg.textContent = t.winMsg + fmt(G.elapsed);
+      setBi(winMsg, 'winMsg', fmt(G.elapsed));
       const f = performance.now() + 600;
       G.pieces.forEach(p => { p.flash = f; });
       setTimeout(() => { winEl.classList.remove('hidden'); }, 700);
@@ -866,56 +1007,42 @@
     requestDraw();
   }
 
-  /* ---------- 語言 ---------- */
-  function setLang(l) {
-    lang = l;
-    const t = I18N[l];
-    document.documentElement.lang = l === 'zh-CN' ? 'zh-Hans' : (l === 'zh-TW' ? 'zh-Hant' : l);
-    document.title = t.title;
-    document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t[el.dataset.i]; });
-    inText.placeholder = t.textPh;
-    setPinyinMsg(pinyinMsgKey);
-    selSnap.value = settings.snap;
+  /* ---------- 套用介面文字 ---------- */
+  function applyUI() {
+    document.documentElement.lang = settings.script === 'simp' ? 'zh-Hans' : 'zh-Hant';
+    document.title = T('title');
+    document.querySelectorAll('[data-i]').forEach(el => setBi(el, el.dataset.i));
+    inText.placeholder = T('textPh');
     const cur = selGrid.value || '10';
     selGrid.innerHTML = '';
     [10, 12, 15].forEach(n => {
       const o = document.createElement('option');
       o.value = n;
-      o.textContent = `${n} × ${n} (${n * n} ${t.pcs})`;
+      o.textContent = `${n} × ${n} (${n * n})`;
       selGrid.appendChild(o);
     });
     selGrid.value = cur;
+    renderSettings();
+    setPinyinMsg(pinyinMsgKey);
     if (G) {
       updateStatus();
-      if (G.done) winMsg.textContent = t.winMsg + fmt(G.elapsed);
+      if (G.done) setBi(winMsg, 'winMsg', fmt(G.elapsed));
     }
     requestDraw();
   }
 
   /* ---------- 按鈕 ---------- */
   function begin() {
-    if (settings.pinyin) loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
+    if (settings.phon !== 'none') loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
     else newGame();
   }
   function startNew() {
-    if (G && !G.done && !confirm(I18N[lang].confirmNew)) return;
+    if (G && !G.done && !confirm(T('confirmNew'))) return;
     begin();
   }
-  btnSet.addEventListener('click', () => {
-    const open = settingsEl.classList.toggle('hidden') === false;
-    btnSet.classList.toggle('on', open);
-  });
-  selSnap.addEventListener('change', () => { settings.snap = selSnap.value; });
-  chkPinyin.addEventListener('change', () => {
-    settings.pinyin = chkPinyin.checked;
-    if (!settings.pinyin) { setPinyinMsg('pinyinNote'); return; }
-    setPinyinMsg('pinyinLoading');
-    loadPinyin().then(ok => {
-      if (ok) setPinyinMsg('pinyinReady');
-      else { setPinyinMsg('pinyinFail'); settings.pinyin = false; chkPinyin.checked = false; }
-    });
-  });
-  selLang.addEventListener('change', () => setLang(selLang.value));
+  btnSet.addEventListener('click', () => { settingsOv.classList.remove('hidden'); });
+  $('settingsDone').addEventListener('click', () => settingsOv.classList.add('hidden'));
+  settingsOv.addEventListener('click', e => { if (e.target === settingsOv) settingsOv.classList.add('hidden'); });
   btnStart.addEventListener('click', startNew);
   inText.addEventListener('keydown', e => { if (e.key === 'Enter') startNew(); });
   btnTidy.addEventListener('click', () => tidy('plain'));
@@ -928,9 +1055,11 @@
   window.addEventListener('resize', resize);
 
   /* ---------- 開始 ---------- */
-  setLang('zh-TW');
+  applyUI();
   resize();
-  newGame();
+  if (settings.phon !== 'none') setPinyinMsg('pinyinLoading');
+  begin();
+  if (settings.phon !== 'none') loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
 })();
 </script>
 </body>
