@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文字拼圖 · Jigsaw Puzzle</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif;
+    background: #1b2631;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  header {
+    background: #1f2d3a;
+    color: #fff;
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-size: .9rem; }
+  .controls label { display: flex; align-items: center; gap: 5px; }
+  input, select, button {
+    padding: 5px 9px;
+    border-radius: 5px;
+    border: 1px solid #aab;
+    font-size: .9rem;
+    font-family: inherit;
+  }
+  input[type=text] { width: 190px; }
+  button {
+    background: #3b4b5c;
+    color: #fff;
+    border: 1px solid #55697d;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover { background: #4a5f74; }
+  button.primary { background: #2e86de; border-color: #2e86de; }
+  button.primary:hover { background: #1e6fc0; }
+  button.on { background: #e67e22; border-color: #e67e22; }
+  .sep { width: 1px; height: 22px; background: #55697d; }
+  #timer { font-family: Consolas, monospace; font-weight: bold; font-size: 1.05rem; min-width: 90px; text-align: right; }
+
+  #stage { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+  #cv { position: absolute; left: 0; top: 0; touch-action: none; display: block; }
+  #status {
+    position: absolute; right: 14px; bottom: 10px;
+    background: rgba(0,0,0,.65); color: #fff;
+    padding: 6px 14px; border-radius: 18px; font-size: .85rem;
+    pointer-events: none;
+  }
+  #win {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 20;
+  }
+  #win.hidden { display: none; }
+  #settings {
+    position: absolute; top: 10px; right: 14px; width: 270px;
+    background: #1f2d3a; color: #fff; border-radius: 10px;
+    padding: 12px 16px 14px; z-index: 15;
+    box-shadow: 0 8px 28px rgba(0,0,0,.5); font-size: .9rem;
+  }
+  #settings.hidden { display: none; }
+  #settings h3 { margin: 0 0 10px; font-size: 1rem; }
+  #settings .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+  #settings .note { font-size: .78rem; color: #b9c6d3; line-height: 1.4; margin: 2px 0 6px 24px; }
+  #win .card {
+    background: #fff; border-radius: 14px; padding: 28px 40px;
+    text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4);
+  }
+  #win h2 { margin: 0 0 10px; font-size: 1.8rem; }
+  #win p { margin: 0 0 18px; font-size: 1.1rem; }
+  #win button { margin: 0 6px; padding: 8px 18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 data-i="title"></h1>
+  <div class="controls">
+    <label><span data-i="lang"></span>
+      <select id="selLang">
+        <option value="zh-TW">繁體中文</option>
+        <option value="zh-CN">简体中文</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+    </label>
+    <label><span data-i="text"></span>
+      <input type="text" id="inText" maxlength="20" value="快樂拼圖遊戲好好玩">
+    </label>
+    <label><span data-i="grid"></span>
+      <select id="selGrid"></select>
+    </label>
+    <button id="btnStart" class="primary" data-i="start"></button>
+    <span class="sep"></span>
+    <button id="btnTidy">🧹 <span data-i="tidy"></span></button>
+    <button id="btnEdges">🔲 <span data-i="edges"></span></button>
+    <button id="btnPreview">🖼️ <span data-i="preview"></span></button>
+    <button id="btnFrame">▭ <span data-i="frame"></span></button>
+    <button id="btnSound" class="on">🔊</button>
+    <button id="btnSet">⚙️ <span data-i="settings"></span></button>
+    <span id="timer">⏱ 00:00</span>
+  </div>
+</header>
+
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="status"></div>
+  <div id="settings" class="hidden">
+    <h3>⚙️ <span data-i="settings"></span></h3>
+    <label class="row"><input type="checkbox" id="chkPinyin"> <span data-i="pinyin"></span></label>
+    <div class="note" id="pinyinMsg"></div>
+    <label class="row"><span data-i="snap"></span>
+      <select id="selSnap">
+        <option value="weak" data-i="snapWeak"></option>
+        <option value="mid" data-i="snapMid"></option>
+        <option value="strong" data-i="snapStrong"></option>
+      </select>
+    </label>
+  </div>
+  <div id="win" class="hidden">
+    <div class="card">
+      <h2 data-i="winTitle"></h2>
+      <p id="winMsg"></p>
+      <button id="winAgain" class="primary" data-i="again"></button>
+      <button id="winClose" data-i="close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- 多國語言 ---------- */
+  const I18N = {
+    'zh-TW': { title:'文字拼圖', lang:'語言', text:'拼圖文字', textPh:'輸入1～20個字', grid:'數量', pcs:'片',
+      start:'開始新遊戲', tidy:'整理拼圖池', edges:'邊角優先', preview:'完成圖', frame:'提示框',
+      pool:'未使用的拼圖池', poolHint:'拖曳整理・滾輪或拖空白處捲動',
+      largest:'最大一塊', inPool:'池中', onTable:'桌上',
+      confirmNew:'要放棄目前的進度，開始新遊戲嗎？',
+      winTitle:'🎉 拼好了！', winMsg:'完成時間：', again:'再玩一次', close:'看看成品' },
+    'zh-CN': { title:'文字拼图', lang:'语言', text:'拼图文字', textPh:'输入1～20个字', grid:'数量', pcs:'片',
+      start:'开始新游戏', tidy:'整理拼图池', edges:'边角优先', preview:'完成图', frame:'提示框',
+      pool:'未使用的拼图池', poolHint:'拖曳整理・滚轮或拖空白处滚动',
+      largest:'最大一块', inPool:'池中', onTable:'桌上',
+      confirmNew:'要放弃目前的进度，开始新游戏吗？',
+      winTitle:'🎉 拼好了！', winMsg:'完成时间：', again:'再玩一次', close:'看看成品' },
+    'en': { title:'Text Jigsaw Puzzle', lang:'Language', text:'Puzzle text', textPh:'Type 1–20 characters', grid:'Size', pcs:'pcs',
+      start:'New game', tidy:'Tidy pool', edges:'Edges first', preview:'Preview', frame:'Guide frame',
+      pool:'Unused pieces', poolHint:'Drag to sort · wheel or drag empty area to scroll',
+      largest:'Largest chunk', inPool:'In pool', onTable:'On table',
+      confirmNew:'Give up current progress and start a new game?',
+      winTitle:'🎉 Completed!', winMsg:'Time: ', again:'Play again', close:'View result' },
+    'es': { title:'Rompecabezas de texto', lang:'Idioma', text:'Texto', textPh:'Escribe de 1 a 20 caracteres', grid:'Tamaño', pcs:'piezas',
+      start:'Nueva partida', tidy:'Ordenar banco', edges:'Bordes primero', preview:'Modelo', frame:'Marco guía',
+      pool:'Piezas sin usar', poolHint:'Arrastra para ordenar · rueda o arrastra el fondo para desplazar',
+      largest:'Bloque mayor', inPool:'En banco', onTable:'En mesa',
+      confirmNew:'¿Abandonar el progreso actual y empezar una partida nueva?',
+      winTitle:'🎉 ¡Completado!', winMsg:'Tiempo: ', again:'Jugar otra vez', close:'Ver resultado' }
+  };
+  const I18N_EXTRA = {
+    'zh-TW': { settings:'設定', pinyin:'在字上方顯示拼音', pinyinNote:'下一局（開始新遊戲）才會套用。需要網路載入拼音資料。',
+      pinyinLoading:'拼音資料載入中…', pinyinReady:'拼音資料已就緒，開始新遊戲後套用。', pinyinFail:'拼音資料載入失敗，請確認網路後再試。',
+      snap:'接合吸力', snapWeak:'弱（要放得很準）', snapMid:'中', snapStrong:'強（靠近就吸住）' },
+    'zh-CN': { settings:'设置', pinyin:'在字上方显示拼音', pinyinNote:'下一局（开始新游戏）才会套用。需要网络加载拼音数据。',
+      pinyinLoading:'拼音数据加载中…', pinyinReady:'拼音数据已就绪，开始新游戏后套用。', pinyinFail:'拼音数据加载失败，请确认网络后再试。',
+      snap:'接合吸力', snapWeak:'弱（要放得很准）', snapMid:'中', snapStrong:'强（靠近就吸住）' },
+    'en': { settings:'Settings', pinyin:'Show pinyin above characters', pinyinNote:'Applies from the next game. Needs internet to load pinyin data.',
+      pinyinLoading:'Loading pinyin data…', pinyinReady:'Pinyin ready. It applies when you start a new game.', pinyinFail:'Could not load pinyin data. Check your connection and try again.',
+      snap:'Snap strength', snapWeak:'Weak (place precisely)', snapMid:'Medium', snapStrong:'Strong (snaps when close)' },
+    'es': { settings:'Ajustes', pinyin:'Mostrar pinyin sobre los caracteres', pinyinNote:'Se aplica en la próxima partida. Necesita internet para cargar el pinyin.',
+      pinyinLoading:'Cargando pinyin…', pinyinReady:'Pinyin listo. Se aplica al iniciar una nueva partida.', pinyinFail:'No se pudo cargar el pinyin. Revisa tu conexión e inténtalo de nuevo.',
+      snap:'Fuerza de encaje', snapWeak:'Baja (colocar con precisión)', snapMid:'Media', snapStrong:'Alta (encaja al acercar)' }
+  };
+  Object.keys(I18N_EXTRA).forEach(k => Object.assign(I18N[k], I18N_EXTRA[k]));
+  let lang = 'zh-TW';
+  const FONT = '"Noto Sans TC","Noto Sans SC","PingFang TC","PingFang SC","Microsoft JhengHei","Microsoft YaHei","Heiti TC",sans-serif';
+  const DEFAULT_TEXT = '拼圖遊戲';
+
+  /* ---------- 基本物件 ---------- */
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const stage = document.getElementById('stage');
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const selLang = $('selLang'), inText = $('inText'), selGrid = $('selGrid');
+  const btnStart = $('btnStart'), btnTidy = $('btnTidy'), btnEdges = $('btnEdges');
+  const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound');
+  const timerEl = $('timer'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
+
+  let W = 800, H = 600;
+  let G = null;            // 目前的遊戲
+  let drag = null;
+  let showPreview = false, showFrame = false, soundOn = true;
+  let timerId = 0, raf = 0;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  /* ---------- 設定（拼音、吸力） ---------- */
+  const settings = { pinyin: false, snap: 'mid' };
+  const SNAP = { weak: .18, mid: .28, strong: .40 };
+  const settingsEl = $('settings'), btnSet = $('btnSet');
+  const chkPinyin = $('chkPinyin'), selSnap = $('selSnap'), pinyinMsg = $('pinyinMsg');
+  let pinyinMsgKey = 'pinyinNote';
+  function setPinyinMsg(key) {
+    pinyinMsgKey = key;
+    pinyinMsg.textContent = I18N[lang][key];
+  }
+  let pinyinLoading = null;
+  function loadPinyin() {
+    if (window.pinyinPro) return Promise.resolve(true);
+    if (pinyinLoading) return pinyinLoading;
+    pinyinLoading = new Promise(res => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js';
+      s.onload = () => res(!!window.pinyinPro);
+      s.onerror = () => { pinyinLoading = null; res(false); };
+      document.head.appendChild(s);
+    });
+    return pinyinLoading;
+  }
+
+  /* ---------- 桌布紋理 ---------- */
+  const noise = document.createElement('canvas');
+  noise.width = noise.height = 96;
+  (function () {
+    const n = noise.getContext('2d');
+    for (let i = 0; i < 700; i++) {
+      n.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)';
+      n.fillRect(Math.random() * 96, Math.random() * 96, 1 + Math.random() * 2, 1 + Math.random() * 2);
+    }
+  })();
+  let noisePattern = null;
+
+  /* ---------- 畫面尺寸 ---------- */
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    W = Math.max(400, Math.floor(r.width));
+    H = Math.max(300, Math.floor(r.height));
+    cv.width = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    noisePattern = ctx.createPattern(noise, 'repeat');
+    requestDraw();
+  }
+
+  /* ---------- 卡榫形狀 ---------- */
+  // 每一段是 [控制點1 t,h, 控制點2 t,h, 終點 t,h]，t 沿著邊、h 往外凸出（以邊長為單位）
+  const TAB = [
+    [.40, .00, .44, .02, .44, .07],
+    [.44, .11, .38, .10, .38, .17],
+    [.38, .25, .44, .29, .50, .29],
+    [.56, .29, .62, .25, .62, .17],
+    [.62, .10, .56, .11, .56, .07],
+    [.56, .02, .60, .00, .64, .00]
+  ];
+
+  function edge(p, x0, y0, x1, y1, nx, ny, ed, rev, len) {
+    if (!ed) { p.lineTo(x1, y1); return; }
+    const j = rev ? -ed.j : ed.j;
+    const f = (t, h) => [
+      x0 + (x1 - x0) * (t + j) + nx * ed.s * h * len,
+      y0 + (y1 - y0) * (t + j) + ny * ed.s * h * len
+    ];
+    let a = f(.36, 0);
+    p.lineTo(a[0], a[1]);
+    for (const s of TAB) {
+      const c1 = f(s[0], s[1]), c2 = f(s[2], s[3]), e = f(s[4], s[5]);
+      p.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], e[0], e[1]);
+    }
+    p.lineTo(x1, y1);
+  }
+
+  function makePath(P, e) {
+    const p = new Path2D();
+    p.moveTo(0, 0);
+    edge(p, 0, 0, P, 0, 0, -1, e.top, false, P);
+    edge(p, P, 0, P, P, 1, 0, e.right, false, P);
+    edge(p, P, P, 0, P, 0, 1, e.bottom, true, P);
+    edge(p, 0, P, 0, 0, -1, 0, e.left, true, P);
+    p.closePath();
+    return p;
+  }
+
+  /* ---------- 產生拼圖圖片 ---------- */
+  function roundRect(x, X, Y, w, h, r) {
+    x.beginPath();
+    x.moveTo(X + r, Y);
+    x.arcTo(X + w, Y, X + w, Y + h, r);
+    x.arcTo(X + w, Y + h, X, Y + h, r);
+    x.arcTo(X, Y + h, X, Y, r);
+    x.arcTo(X, Y, X + w, Y, r);
+    x.closePath();
+  }
+
+  function makeImage(chars, S, py) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.round(S * DPR);
+    const x = c.getContext('2d');
+    x.scale(DPR, DPR);
+    const hue = Math.random() * 360;
+
+    const g = x.createLinearGradient(0, 0, S, S);
+    g.addColorStop(0, `hsl(${hue},85%,74%)`);
+    g.addColorStop(.5, `hsl(${(hue + 55) % 360},85%,80%)`);
+    g.addColorStop(1, `hsl(${(hue + 120) % 360},80%,72%)`);
+    x.fillStyle = g;
+    x.fillRect(0, 0, S, S);
+
+    // 隨機花紋，讓每一片都有辨識特徵
+    for (let i = 0; i < 70; i++) {
+      const cx = Math.random() * S, cy = Math.random() * S;
+      const r = S * (.02 + Math.random() * .08);
+      const col = `hsla(${(hue + Math.random() * 220) % 360},80%,${45 + Math.random() * 35}%,${.18 + Math.random() * .25})`;
+      x.fillStyle = col; x.strokeStyle = col;
+      const k = i % 3;
+      x.beginPath();
+      if (k === 0) { x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); }
+      else if (k === 1) { x.moveTo(cx, cy - r); x.lineTo(cx + r, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r, cy); x.closePath(); x.fill(); }
+      else { x.lineWidth = r * .3; x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke(); }
+    }
+    for (let i = 0; i < 5; i++) {
+      const y0 = S * (i + .5) / 5;
+      x.beginPath();
+      for (let u = 0; u <= S; u += 8) {
+        const v = y0 + Math.sin(u / S * Math.PI * (2 + i) + i) * S * .04;
+        if (u === 0) x.moveTo(u, v); else x.lineTo(u, v);
+      }
+      x.strokeStyle = 'rgba(255,255,255,.35)';
+      x.lineWidth = S * .012;
+      x.stroke();
+    }
+
+    // 文字：由左至右、由上到下
+    const n = chars.length;
+    const perRow = Math.ceil(Math.sqrt(n));
+    const rowsN = Math.ceil(n / perRow);
+    const cell = S / perRow;
+    const y0 = (S - rowsN * cell) / 2;
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    const k = py ? .68 : .86;                       // 有拼音時字小一點，上方留位置
+    chars.forEach((ch, i) => {
+      const r = Math.floor(i / perRow), cc = i % perRow;
+      const inRow = (r === rowsN - 1) ? n - (rowsN - 1) * perRow : perRow;
+      const xo = (perRow - inRow) * cell / 2;       // 最後一行置中（閱讀順序不變）
+      const cx = xo + (cc + .5) * cell, cy = y0 + (r + .5) * cell;
+      x.fillStyle = 'rgba(255,255,255,.55)';
+      roundRect(x, cx - cell * .49, cy - cell * .49, cell * .98, cell * .98, cell * .12);
+      x.fill();
+      const ty = cy + cell * (py ? .12 : .04);
+      x.font = `900 ${cell * k}px ${FONT}`;
+      x.lineJoin = 'round';
+      x.lineWidth = cell * .08;
+      x.strokeStyle = '#fff';
+      x.strokeText(ch, cx, ty);
+      x.fillStyle = `hsl(${(hue + 200 + i * 41) % 360},65%,28%)`;
+      x.fillText(ch, cx, ty);
+      if (py && py[i] && py[i] !== ch) {
+        x.font = `700 ${cell * .2}px ${FONT}`;
+        x.lineWidth = cell * .05;
+        x.strokeStyle = '#fff';
+        x.strokeText(py[i], cx, cy - cell * .34, cell * .92);
+        x.fillStyle = '#1f2d3a';
+        x.fillText(py[i], cx, cy - cell * .34, cell * .92);
+      }
+    });
+    return c;
+  }
+
+  /* ---------- 開新遊戲 ---------- */
+  function newGame() {
+    let chars = Array.from((inText.value || '').replace(/\s+/g, '')).slice(0, 20);
+    if (!chars.length) chars = Array.from(DEFAULT_TEXT);
+    inText.value = chars.join('');
+
+    const n = parseInt(selGrid.value, 10);
+    const cols = n, rows = n, N = n * n;
+    const poolW = Math.round(clamp(W * .27, 250, 400));
+    const tableW = W - poolW;
+    const S0 = Math.min(H * .86, tableW * .84, 700);
+    const P = Math.max(24, Math.floor(S0 / n));
+    const S = P * n;
+    const m = Math.ceil(P * .3) + 3;
+    const sw = P + 2 * m;
+    let py = null;
+    if (settings.pinyin && window.pinyinPro) {
+      try {
+        py = window.pinyinPro.pinyin(chars.join(''), { type: 'array', toneType: 'symbol' });
+        if (!py || py.length !== chars.length) py = null;
+      } catch (err) { py = null; }
+    }
+    const img = makeImage(chars, S, py);
+
+    // 邊的凸凹（相鄰兩片共用同一條邊，所以一定吻合）
+    const rnd = () => ({ s: Math.random() < .5 ? 1 : -1, j: (Math.random() - .5) * .12 });
+    const h = [], v = [];
+    for (let r = 0; r < rows - 1; r++) { h[r] = []; for (let c = 0; c < cols; c++) h[r][c] = rnd(); }
+    for (let r = 0; r < rows; r++) { v[r] = []; for (let c = 0; c < cols - 1; c++) v[r][c] = rnd(); }
+
+    const pieces = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const e = {
+          top:    r > 0        ? { s: -h[r - 1][c].s, j: h[r - 1][c].j } : null,
+          bottom: r < rows - 1 ? { s:  h[r][c].s,     j: h[r][c].j }     : null,
+          left:   c > 0        ? { s: -v[r][c - 1].s, j: v[r][c - 1].j } : null,
+          right:  c < cols - 1 ? { s:  v[r][c].s,     j: v[r][c].j }     : null
+        };
+        const path = makePath(P, e);
+
+        // 預先畫好每一片的外觀
+        const sc = document.createElement('canvas');
+        sc.width = sc.height = Math.ceil(sw * DPR);
+        const sx = sc.getContext('2d');
+        sx.scale(DPR, DPR);
+        sx.translate(m, m);
+        sx.save();
+        sx.clip(path);
+        sx.drawImage(img, -c * P, -r * P, S, S);
+        sx.lineJoin = 'round';
+        sx.translate(1, 1);
+        sx.lineWidth = 2.5;
+        sx.strokeStyle = 'rgba(255,255,255,.38)';
+        sx.stroke(path);
+        sx.translate(-2, -2);
+        sx.strokeStyle = 'rgba(0,0,0,.25)';
+        sx.stroke(path);
+        sx.restore();
+        sx.lineWidth = .9;
+        sx.strokeStyle = 'rgba(0,0,0,.5)';
+        sx.stroke(path);
+
+        const corner = (r === 0 || r === rows - 1) && (c === 0 || c === cols - 1);
+        const border = r === 0 || r === rows - 1 || c === 0 || c === cols - 1;
+        pieces.push({
+          id: r * cols + c, r, c, x: 0, y: 0, pool: true, g: r * cols + c,
+          path, sprite: sc, flash: 0, type: corner ? 0 : (border ? 1 : 2)
+        });
+      }
+    }
+
+    G = {
+      cols, rows, N, P, S, m, sw, poolW, img, pieces,
+      order: pieces.map(p => p.id).sort(() => Math.random() - .5),
+      scroll: 0, start: performance.now(), done: false, elapsed: 0
+    };
+
+    // 初始散落在拼圖池
+    const cell = P * 1.2;
+    const usable = poolW - 16 - 2 * m;
+    const cp = Math.max(1, Math.floor((usable - P) / cell) + 1);
+    const totalW = (cp - 1) * cell + P;
+    const x0 = 8 + m + (usable - totalW) / 2;
+    G.order.forEach((id, i) => {
+      const p = pieces[id];
+      p.x = x0 + (i % cp) * cell + (Math.random() - .5) * P * .12;
+      p.y = 50 + m + Math.floor(i / cp) * cell + (Math.random() - .5) * P * .12;
+    });
+
+    drag = null;
+    winEl.classList.add('hidden');
+    startTimer();
+    updateStatus();
+    requestDraw();
+  }
+
+  /* ---------- 計時器 ---------- */
+  function fmt(ms) {
+    const s = Math.floor(ms / 1000);
+    const hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60;
+    const p = v => String(v).padStart(2, '0');
+    return (hh ? p(hh) + ':' : '') + p(mm) + ':' + p(ss);
+  }
+  function startTimer() {
+    clearInterval(timerId);
+    timerEl.textContent = '⏱ 00:00';
+    timerId = setInterval(() => {
+      if (!G || G.done) return;
+      G.elapsed = performance.now() - G.start;
+      timerEl.textContent = '⏱ ' + fmt(G.elapsed);
+    }, 250);
+  }
+
+  /* ---------- 狀態列 ---------- */
+  function updateStatus() {
+    if (!G) return;
+    const t = I18N[lang];
+    const cnt = new Map();
+    let pc = 0;
+    for (const p of G.pieces) {
+      cnt.set(p.g, (cnt.get(p.g) || 0) + 1);
+      if (p.pool) pc++;
+    }
+    const big = Math.max(...cnt.values());
+    statusEl.textContent = `${t.largest}: ${big} / ${G.N}　${t.inPool}: ${pc}　${t.onTable}: ${G.N - pc}`;
+  }
+
+  /* ---------- 繪圖 ---------- */
+  function requestDraw() { if (!raf) raf = requestAnimationFrame(draw); }
+
+  function drawPiece(p, x, y) {
+    ctx.drawImage(p.sprite, x - G.m, y - G.m, G.sw, G.sw);
+  }
+
+  function maxScroll() {
+    let b = 0;
+    for (const p of G.pieces) if (p.pool) b = Math.max(b, p.y + G.P + G.m);
+    return Math.max(0, b + 16 - H);
+  }
+  function clampScroll() { G.scroll = clamp(G.scroll, 0, maxScroll()); }
+
+  function draw() {
+    raf = 0;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+
+    // 桌面（綠色桌布）
+    ctx.fillStyle = '#2f5d4f';
+    ctx.fillRect(0, 0, W, H);
+    if (noisePattern) { ctx.fillStyle = noisePattern; ctx.fillRect(0, 0, W, H); }
+    if (!G) return;
+
+    const t = I18N[lang];
+    const now = performance.now();
+    let anim = false;
+    const pw = G.poolW;
+
+    // 提示框
+    if (showFrame) {
+      const fx = pw + (W - pw - G.S) / 2, fy = (H - G.S) / 2;
+      ctx.save();
+      ctx.setLineDash([10, 7]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.strokeRect(fx, fy, G.S, G.S);
+      ctx.restore();
+    }
+
+    // 拼圖池（紙盒蓋）
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.5)';
+    ctx.shadowBlur = 14; ctx.shadowOffsetX = 3;
+    ctx.fillStyle = '#7a5c3a';
+    ctx.fillRect(0, 0, pw, H);
+    ctx.restore();
+    ctx.fillStyle = '#b8905f';
+    ctx.fillRect(8, 8, pw - 16, H - 16);
+    ctx.strokeStyle = 'rgba(0,0,0,.25)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(8, 8, pw - 16, H - 16);
+
+    // 池中的拼圖（可捲動、裁切在盒內）
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(8, 44, pw - 16, H - 52);
+    ctx.clip();
+    for (const id of G.order) {
+      const p = G.pieces[id];
+      if (!p.pool) continue;
+      ctx.shadowColor = 'rgba(0,0,0,.35)';
+      ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+      drawPiece(p, p.x, p.y - G.scroll);
+    }
+    ctx.restore();
+
+    // 池標題列
+    ctx.fillStyle = '#5d4529';
+    ctx.fillRect(8, 8, pw - 16, 36);
+    let pc = 0;
+    for (const p of G.pieces) if (p.pool) pc++;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = `bold 14px ${FONT}`;
+    ctx.fillText(`${t.pool} (${pc})`, 16, 20);
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    ctx.font = `10.5px ${FONT}`;
+    let hint = t.poolHint;
+    while (ctx.measureText(hint).width > pw - 32 && hint.length > 4) hint = hint.slice(0, -2);
+    ctx.fillText(hint, 16, 35);
+
+    // 捲軸
+    const ms = maxScroll();
+    if (ms > 0) {
+      const trackH = H - 60;
+      const thumb = Math.max(30, trackH * H / (H + ms));
+      const ty = 48 + (trackH - thumb) * (G.scroll / ms);
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      roundRect(ctx, pw - 13, ty, 5, thumb, 2.5);
+      ctx.fill();
+    }
+
+    // 桌上的拼圖
+    for (const id of G.order) {
+      const p = G.pieces[id];
+      if (p.pool) continue;
+      const dragging = drag && drag.set && drag.set.has(id);
+      if (dragging) {
+        ctx.shadowColor = 'rgba(0,0,0,.45)';
+        ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 8;
+        ctx.shadowBlur = drag.members.length <= 80 ? 10 : 0;
+      } else if (p.flash > now) {
+        const a = (p.flash - now) / 600;
+        ctx.shadowColor = `rgba(255,240,120,${a})`;
+        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 16 * a;
+        anim = true;
+      } else {
+        ctx.shadowColor = 'rgba(0,0,0,.35)';
+        ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+      }
+      drawPiece(p, p.x, p.y);
+    }
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+
+    // 完成圖
+    if (showPreview) {
+      const size = clamp((W - pw) * .2, 120, 210);
+      const px = W - size - 20, py = 20;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.5)';
+      ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(px - 6, py - 6, size + 12, size + 12);
+      ctx.restore();
+      ctx.drawImage(G.img, px, py, size, size);
+    }
+
+    if (anim) requestDraw();
+  }
+
+  /* ---------- 點選判斷 ---------- */
+  function pos(e) {
+    const r = cv.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  }
+
+  function hit(mx, my) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.lineWidth = 6;
+    let found = null;
+    for (let i = G.order.length - 1; i >= 0; i--) {
+      const p = G.pieces[G.order[i]];
+      let lx, ly;
+      if (p.pool) {
+        if (mx >= G.poolW - 8 || my < 44) continue;
+        lx = mx - p.x; ly = my + G.scroll - p.y;
+      } else {
+        lx = mx - p.x; ly = my - p.y;
+      }
+      if (ctx.isPointInPath(p.path, lx, ly) || ctx.isPointInStroke(p.path, lx, ly)) { found = p; break; }
+    }
+    ctx.restore();
+    return found;
+  }
+
+  /* ---------- 拖曳 ---------- */
+  cv.addEventListener('pointerdown', e => {
+    if (!G || e.button > 0) return;
+    settingsEl.classList.add('hidden');
+    btnSet.classList.remove('on');
+    const [mx, my] = pos(e);
+    const p = hit(mx, my);
+    if (p) {
+      const members = G.pieces.filter(q => q.g === p.g);
+      const set = new Set(members.map(q => q.id));
+      // 拿起來，放到最上層
+      G.order = G.order.filter(id => !set.has(id)).concat(members.map(q => q.id));
+      if (p.pool) {
+        for (const q of members) { q.y -= G.scroll; q.pool = false; }
+      }
+      drag = { mode: 'piece', members, set, lx: clamp(mx, 0, W), ly: clamp(my, 0, H) };
+      cv.style.cursor = 'grabbing';
+      cv.setPointerCapture(e.pointerId);
+      requestDraw();
+    } else if (mx < G.poolW && my >= 44 && maxScroll() > 0) {
+      drag = { mode: 'scroll', startY: my, startScroll: G.scroll };
+      cv.setPointerCapture(e.pointerId);
+    }
+  });
+
+  cv.addEventListener('pointermove', e => {
+    if (!G) return;
+    const [mx0, my0] = pos(e);
+    if (!drag) {
+      cv.style.cursor = hit(mx0, my0) ? 'grab' : 'default';
+      return;
+    }
+    if (drag.mode === 'scroll') {
+      G.scroll = clamp(drag.startScroll - (my0 - drag.startY), 0, maxScroll());
+      requestDraw();
+      return;
+    }
+    const mx = clamp(mx0, 0, W), my = clamp(my0, 0, H);
+    const dx = mx - drag.lx, dy = my - drag.ly;
+    drag.lx = mx; drag.ly = my;
+    for (const q of drag.members) { q.x += dx; q.y += dy; }
+    requestDraw();
+  });
+
+  function endDrag() {
+    if (!drag) return;
+    if (drag.mode === 'scroll') { drag = null; return; }
+    const members = drag.members;
+    const mx = drag.lx;
+    drag = null;
+    cv.style.cursor = 'grab';
+    if (mx < G.poolW) {
+      nudgeIntoPool(members);
+      for (const q of members) { q.y += G.scroll; q.pool = true; }
+      clampScroll();
+    } else {
+      trySnap(members[0].g);
+    }
+    updateStatus();
+    checkWin();
+    requestDraw();
+  }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  cv.addEventListener('wheel', e => {
+    if (!G) return;
+    const [mx] = pos(e);
+    if (mx < G.poolW) {
+      e.preventDefault();
+      G.scroll = clamp(G.scroll + e.deltaY, 0, maxScroll());
+      requestDraw();
+    }
+  }, { passive: false });
+
+  // 放進池子時，不要讓片子卡在盒子外面
+  function nudgeIntoPool(members) {
+    const m = G.m, P = G.P, pw = G.poolW;
+    let minx = Infinity, maxx = -Infinity, miny = Infinity;
+    for (const q of members) {
+      minx = Math.min(minx, q.x); maxx = Math.max(maxx, q.x + P); miny = Math.min(miny, q.y);
+    }
+    let dx = 0, dy = 0;
+    if (maxx > pw - 8 - m) dx = pw - 8 - m - maxx;
+    if (minx + dx < 8 + m) dx = 8 + m - minx;
+    if (miny < 46 + m) dy = 46 + m - miny;
+    for (const q of members) { q.x += dx; q.y += dy; }
+  }
+
+  /* ---------- 相鄰吸附 ---------- */
+  const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+  function trySnap(gid) {
+    const { P, cols, rows, pieces } = G;
+    const tol = P * SNAP[settings.snap];
+    let merged = false, guard = 0;
+    while (guard++ < 30) {
+      const mem = pieces.filter(q => q.g === gid);
+      let found = null;
+      outer:
+      for (const p of mem) {
+        for (const [dr, dc] of DIRS) {
+          const r = p.r + dr, c = p.c + dc;
+          if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+          const q = pieces[r * cols + c];
+          if (q.g === gid || q.pool) continue;
+          const ex = p.x + dc * P, ey = p.y + dr * P;   // q 正確的位置
+          if (Math.hypot(q.x - ex, q.y - ey) < tol) { found = { q, mx: q.x - ex, my: q.y - ey }; break outer; }
+        }
+      }
+      if (!found) break;
+      // 把手上這塊「推」到定位，再接合
+      for (const p of mem) { p.x += found.mx; p.y += found.my; }
+      const other = found.q.g;
+      const flash = performance.now() + 600;
+      for (const q of pieces) { if (q.g === other) q.g = gid; }
+      for (const q of pieces) { if (q.g === gid) q.flash = flash; }
+      merged = true;
+    }
+    if (merged) {
+      click();
+      // 接好的整塊放到最上層
+      const set = new Set(G.pieces.filter(q => q.g === gid).map(q => q.id));
+      G.order = G.order.filter(id => !set.has(id)).concat([...set]);
+    }
+  }
+
+  function checkWin() {
+    if (G.done) return;
+    const g0 = G.pieces[0].g;
+    if (G.pieces.every(p => p.g === g0 && !p.pool)) {
+      G.done = true;
+      G.elapsed = performance.now() - G.start;
+      timerEl.textContent = '⏱ ' + fmt(G.elapsed);
+      const t = I18N[lang];
+      winMsg.textContent = t.winMsg + fmt(G.elapsed);
+      const f = performance.now() + 600;
+      G.pieces.forEach(p => { p.flash = f; });
+      setTimeout(() => { winEl.classList.remove('hidden'); }, 700);
+    }
+  }
+
+  /* ---------- 音效 ---------- */
+  let audio = null;
+  function click() {
+    if (!soundOn) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audio.createOscillator(), g = audio.createGain(), t0 = audio.currentTime;
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(560, t0);
+      o.frequency.exponentialRampToValueAtTime(260, t0 + .07);
+      g.gain.setValueAtTime(.18, t0);
+      g.gain.exponentialRampToValueAtTime(.001, t0 + .1);
+      o.connect(g); g.connect(audio.destination);
+      o.start(t0); o.stop(t0 + .12);
+    } catch (err) { /* 沒聲音也沒關係 */ }
+  }
+
+  /* ---------- 整理拼圖池 ---------- */
+  function tidy(mode) {
+    if (!G) return;
+    const pool = G.pieces.filter(p => p.pool);
+    if (!pool.length) return;
+    const P = G.P, m = G.m, pw = G.poolW;
+    const map = new Map();
+    pool.forEach(p => { if (!map.has(p.g)) map.set(p.g, []); map.get(p.g).push(p); });
+    const items = [...map.values()].map(mem => {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      mem.forEach(p => { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + P); y1 = Math.max(y1, p.y + P); });
+      return { mem, x0, y0, w: x1 - x0, h: y1 - y0, type: Math.min(...mem.map(p => p.type)), big: mem.length > 1 };
+    });
+    items.sort((a, b) => (Math.round(a.y0 / P) - Math.round(b.y0 / P)) || (a.x0 - b.x0));
+    items.sort((a, b) => (b.big - a.big));                       // 已拼好的塊先放
+    if (mode === 'edges') items.sort((a, b) => (b.big - a.big) || (a.type - b.type));
+
+    const gap = P * .22;
+    const left = 8 + m, right = pw - 8 - m;
+    let cx = left, cy = 46 + m, rowH = 0;
+    for (const it of items) {
+      if (cx + it.w > right && cx > left) { cx = left; cy += rowH + gap; rowH = 0; }
+      const dx = cx - it.x0, dy = cy - it.y0;
+      it.mem.forEach(p => { p.x += dx; p.y += dy; });
+      cx += it.w + gap;
+      rowH = Math.max(rowH, it.h);
+    }
+    G.scroll = 0;
+    requestDraw();
+  }
+
+  /* ---------- 語言 ---------- */
+  function setLang(l) {
+    lang = l;
+    const t = I18N[l];
+    document.documentElement.lang = l === 'zh-CN' ? 'zh-Hans' : (l === 'zh-TW' ? 'zh-Hant' : l);
+    document.title = t.title;
+    document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t[el.dataset.i]; });
+    inText.placeholder = t.textPh;
+    setPinyinMsg(pinyinMsgKey);
+    selSnap.value = settings.snap;
+    const cur = selGrid.value || '10';
+    selGrid.innerHTML = '';
+    [10, 12, 15].forEach(n => {
+      const o = document.createElement('option');
+      o.value = n;
+      o.textContent = `${n} × ${n} (${n * n} ${t.pcs})`;
+      selGrid.appendChild(o);
+    });
+    selGrid.value = cur;
+    if (G) {
+      updateStatus();
+      if (G.done) winMsg.textContent = t.winMsg + fmt(G.elapsed);
+    }
+    requestDraw();
+  }
+
+  /* ---------- 按鈕 ---------- */
+  function begin() {
+    if (settings.pinyin) loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
+    else newGame();
+  }
+  function startNew() {
+    if (G && !G.done && !confirm(I18N[lang].confirmNew)) return;
+    begin();
+  }
+  btnSet.addEventListener('click', () => {
+    const open = settingsEl.classList.toggle('hidden') === false;
+    btnSet.classList.toggle('on', open);
+  });
+  selSnap.addEventListener('change', () => { settings.snap = selSnap.value; });
+  chkPinyin.addEventListener('change', () => {
+    settings.pinyin = chkPinyin.checked;
+    if (!settings.pinyin) { setPinyinMsg('pinyinNote'); return; }
+    setPinyinMsg('pinyinLoading');
+    loadPinyin().then(ok => {
+      if (ok) setPinyinMsg('pinyinReady');
+      else { setPinyinMsg('pinyinFail'); settings.pinyin = false; chkPinyin.checked = false; }
+    });
+  });
+  selLang.addEventListener('change', () => setLang(selLang.value));
+  btnStart.addEventListener('click', startNew);
+  inText.addEventListener('keydown', e => { if (e.key === 'Enter') startNew(); });
+  btnTidy.addEventListener('click', () => tidy('plain'));
+  btnEdges.addEventListener('click', () => tidy('edges'));
+  btnPreview.addEventListener('click', () => { showPreview = !showPreview; btnPreview.classList.toggle('on', showPreview); requestDraw(); });
+  btnFrame.addEventListener('click', () => { showFrame = !showFrame; btnFrame.classList.toggle('on', showFrame); requestDraw(); });
+  btnSound.addEventListener('click', () => { soundOn = !soundOn; btnSound.classList.toggle('on', soundOn); btnSound.textContent = soundOn ? '🔊' : '🔇'; });
+  $('winAgain').addEventListener('click', () => { G.done = true; begin(); });
+  $('winClose').addEventListener('click', () => winEl.classList.add('hidden'));
+  window.addEventListener('resize', resize);
+
+  /* ---------- 開始 ---------- */
+  setLang('zh-TW');
+  resize();
+  newGame();
+})();
+</script>
+</body>
+</html>
