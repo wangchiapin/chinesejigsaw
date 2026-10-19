@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>文字拼圖 · Jigsaw Puzzle</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -18,41 +21,40 @@
     overflow: hidden;
   }
   header {
-    background: #1f2d3a;
-    color: #fff;
-    padding: 8px 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 6px rgba(0,0,0,.35);
-    z-index: 10;
+    background: #1f2d3a; color: #fff; padding: 10px 18px 12px;
+    display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35); z-index: 10;
   }
-  header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
-  .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-size: .9rem; }
-  .controls label { display: flex; align-items: center; gap: 5px; }
+  .hrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; }
+  header h1 { margin: 0; font-size: 1.7rem; letter-spacing: 2px; line-height: 1.15; }
+  header h1 small { font-size: .46em; letter-spacing: 1px; margin-top: 2px; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .95rem; }
   input, select, button {
-    padding: 5px 9px;
-    border-radius: 5px;
-    border: 1px solid #aab;
-    font-size: .9rem;
-    font-family: inherit;
+    padding: 6px 10px; border-radius: 6px; border: 1px solid #aab;
+    font-size: .95rem; font-family: inherit;
   }
-  input[type=text] { width: 190px; }
-  button {
-    background: #3b4b5c;
-    color: #fff;
-    border: 1px solid #55697d;
-    cursor: pointer;
-    font-weight: bold;
-  }
+  button { background: #3b4b5c; color: #fff; border: 1px solid #55697d; cursor: pointer; font-weight: bold; }
   button:hover { background: #4a5f74; }
   button.primary { background: #2e86de; border-color: #2e86de; }
   button.primary:hover { background: #1e6fc0; }
   button.on { background: #e67e22; border-color: #e67e22; }
-  .sep { width: 1px; height: 22px; background: #55697d; }
-  #timer { font-family: Consolas, monospace; font-weight: bold; font-size: 1.05rem; min-width: 90px; text-align: right; }
+  .sep { width: 1px; height: 28px; background: #55697d; }
+  .stat { text-align: center; min-width: 88px; line-height: 1.15; }
+  .stat b { display: block; font-family: Consolas, monospace; font-size: 1.3rem; }
+  .stat span { font-size: .72rem; opacity: .85; }
+  header .setup { justify-content: flex-start; gap: 10px 18px; padding: 10px 14px 12px;
+    background: #2a3d50; border: 2px solid #f0a030; border-radius: 12px; align-items: flex-end; }
+  .bigfield { display: flex; flex-direction: column; flex: 1 1 400px; min-width: 260px; }
+  .sizefield { display: flex; flex-direction: column; }
+  header .setup .biglabel { display: block; text-align: left; font-size: 1.1rem; font-weight: 800;
+    color: #ffd48a; margin-bottom: 5px; line-height: 1.25; }
+  header .setup .biglabel small { font-size: .72em; font-weight: 400; color: #ead9bd; opacity: 1; }
+  #inText { width: 100%; height: 48px; font-size: 1.55rem; font-weight: 700; padding: 4px 14px;
+    border: 3px solid #f0a030; border-radius: 10px; background: #fff; color: #1f2d3a; letter-spacing: 2px; }
+  #inText:focus { outline: none; box-shadow: 0 0 0 4px rgba(240,160,48,.4); }
+  #selGrid { height: 48px; font-size: 1.1rem; }
+  #btnStart { height: 48px; font-size: 1.25rem; padding: 0 28px; }
+  #btnStart small { font-size: .55em; }
 
   #stage { flex: 1; position: relative; overflow: hidden; min-height: 0; }
   #cv { position: absolute; left: 0; top: 0; touch-action: none; display: block; }
@@ -72,11 +74,11 @@
   small { display: block; font-size: .68em; font-weight: 400; opacity: .8; line-height: 1.2; }
   header [data-i] { display: inline-block; text-align: center; line-height: 1.2; }
   header h1[data-i] { text-align: left; display: block; }
-  #settingsOv {
+  .ov {
     position: absolute; inset: 0; background: rgba(0,0,0,.45);
     display: flex; align-items: center; justify-content: center; z-index: 30;
   }
-  #settingsOv.hidden { display: none; }
+  .ov.hidden { display: none; }
   .panel {
     background: #1f2d3a; color: #fff; border-radius: 14px;
     padding: 18px 22px 20px; width: min(440px, 92vw); max-height: 92%; overflow: auto;
@@ -90,6 +92,18 @@
   .seg button.active { background: #2e86de; border-color: #2e86de; }
   .note { font-size: .78rem; color: #b9c6d3; line-height: 1.4; margin-top: 6px; }
   .panel .done { margin-top: 18px; width: 100%; padding: 9px; }
+  #rankList { list-style: none; margin: 10px 0 0; padding: 0; max-height: 46vh; overflow: auto; }
+  #rankList li { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center;
+    padding: 7px 6px; border-bottom: 1px solid #34495e; }
+  #rankList li.me { background: rgba(46,134,222,.28); border-radius: 6px; }
+  #rankList .rk { font-weight: 800; color: #f0a030; text-align: center; }
+  #rankList .nm small { display: block; opacity: .7; font-size: .75em; word-break: break-all; }
+  #rankList .res { font-family: Consolas, monospace; font-size: .9rem; text-align: right; }
+  #saveBox { margin: 4px 0 16px; }
+  #saveBox .rowf { display: flex; gap: 8px; justify-content: center; align-items: stretch; }
+  #saveBox input { width: 210px; font-size: 1rem; color: #1f2d3a; }
+  #saveBox button { margin: 0; padding: 6px 16px; }
+  #saveMsg { margin-top: 6px; font-size: .9rem; color: #555; min-height: 1.2em; }
   #win .card {
     background: #fff; border-radius: 14px; padding: 28px 40px;
     text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4);
@@ -102,30 +116,38 @@
 <body>
 
 <header>
-  <h1 data-i="title"></h1>
-  <div class="controls">
-    <label><span data-i="text"></span>
-      <input type="text" id="inText" maxlength="20" value="快樂拼圖遊戲好好玩">
+  <div class="hrow">
+    <h1 data-i="title"></h1>
+    <div class="tools">
+      <button id="btnTidy">🧹 <span data-i="tidy"></span></button>
+      <button id="btnEdges">🔲 <span data-i="edges"></span></button>
+      <button id="btnPreview">🖼️ <span data-i="preview"></span></button>
+      <button id="btnFrame">▭ <span data-i="frame"></span></button>
+      <span class="sep"></span>
+      <button id="btnMusic" class="on">🎵</button>
+      <button id="btnSound" class="on">🔊</button>
+      <button id="btnRank">🏆 <span data-i="ranking"></span></button>
+      <button id="btnSet">⚙️ <span data-i="settings"></span></button>
+      <span class="sep"></span>
+      <div class="stat"><b id="timer">⏱ 00:00</b><span data-i="time"></span></div>
+      <div class="stat"><b id="moves">👆 0</b><span data-i="moves"></span></div>
+    </div>
+  </div>
+  <div class="hrow setup">
+    <label class="bigfield"><span class="biglabel" data-i="textLabel"></span>
+      <input type="text" id="inText" maxlength="20" value="快樂拼圖遊戲好好玩" autocomplete="off">
     </label>
-    <label><span data-i="grid"></span>
+    <label class="sizefield"><span class="biglabel" data-i="grid"></span>
       <select id="selGrid"></select>
     </label>
     <button id="btnStart" class="primary" data-i="start"></button>
-    <span class="sep"></span>
-    <button id="btnTidy">🧹 <span data-i="tidy"></span></button>
-    <button id="btnEdges">🔲 <span data-i="edges"></span></button>
-    <button id="btnPreview">🖼️ <span data-i="preview"></span></button>
-    <button id="btnFrame">▭ <span data-i="frame"></span></button>
-    <button id="btnSound" class="on">🔊</button>
-    <button id="btnSet">⚙️ <span data-i="settings"></span></button>
-    <span id="timer">⏱ 00:00</span>
   </div>
 </header>
 
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="status"></div>
-  <div id="settingsOv" class="hidden">
+  <div id="settingsOv" class="ov hidden">
     <div class="panel">
       <h3>⚙️ <span data-i="settings"></span></h3>
       <div id="settingsBody"></div>
@@ -133,10 +155,28 @@
       <button id="settingsDone" class="primary done" data-i="done"></button>
     </div>
   </div>
+  <div id="rankOv" class="ov hidden">
+    <div class="panel">
+      <h3>🏆 <span data-i="rankTitle"></span></h3>
+      <div class="seg" id="rankTabs"></div>
+      <div class="note" id="rankMsg"></div>
+      <ol id="rankList"></ol>
+      <div class="note" data-i="rankHint"></div>
+      <button id="rankDone" class="primary done" data-i="done"></button>
+    </div>
+  </div>
   <div id="win" class="hidden">
     <div class="card">
       <h2 data-i="winTitle"></h2>
       <p id="winMsg"></p>
+      <div id="saveBox">
+        <div class="rowf">
+          <input type="text" id="nameInput" maxlength="14" autocomplete="off">
+          <button id="saveBtn" class="primary" data-i="save"></button>
+        </div>
+        <div id="saveMsg"></div>
+      </div>
+      <button id="winRank">🏆 <span data-i="ranking"></span></button>
       <button id="winAgain" class="primary" data-i="again"></button>
       <button id="winClose" data-i="close"></button>
     </div>
@@ -176,21 +216,37 @@
   };
   const I18N_EXTRA = {
     'zh-TW': { settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者', langZh:'只有中文',
+      textLabel:'✏️ 輸入你想要的拼圖文字（1～20 個字）', time:'時間', moves:'移動次數', ranking:'排行榜', rankTitle:'排行榜 · 前十名',
+      rankHint:'每台裝置只留最好成績；先比時間，時間一樣比移動次數。', loading:'載入中…', lbEmpty:'還沒有人上榜，你來當第一個！', lbFail:'無法載入排行榜',
+      namePh:'輸入你的名字', save:'存到排行榜', nameErr:'請先輸入名字。', saving:'儲存中…', saved:'已存到排行榜！', saveFail:'儲存失敗，請稍後再試。',
+      notBetter:'你之前的成績更好（{t}，{m} 次），沒有更新。', music:'背景音樂（水滴與風聲）', sfx:'接合音效',
       poolHint:'拖曳整理・滾輪捲動',
       phonNote:'拼音／注音從下一局（開始新遊戲）才會套用，需要網路載入資料。',
       pinyinLoading:'拼音資料載入中…', pinyinReady:'資料已就緒，開始新遊戲後套用。', pinyinFail:'資料載入失敗，請確認網路後再試。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'強', snapNote:'弱＝要放得很準；強＝靠近就吸住。' },
     'zh-CN': { settings:'设置', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者', langZh:'只有中文',
+      textLabel:'✏️ 输入你想要的拼图文字（1～20 个字）', time:'时间', moves:'移动次数', ranking:'排行榜', rankTitle:'排行榜 · 前十名',
+      rankHint:'每台设备只留最好成绩；先比时间，时间一样比移动次数。', loading:'加载中…', lbEmpty:'还没有人上榜，你来当第一个！', lbFail:'无法加载排行榜',
+      namePh:'输入你的名字', save:'存到排行榜', nameErr:'请先输入名字。', saving:'保存中…', saved:'已存到排行榜！', saveFail:'保存失败，请稍后再试。',
+      notBetter:'你之前的成绩更好（{t}，{m} 次），没有更新。', music:'背景音乐（水滴与风声）', sfx:'接合音效',
       poolHint:'拖曳整理・滚轮滚动',
       phonNote:'拼音／注音从下一局（开始新游戏）才会套用，需要网络加载数据。',
       pinyinLoading:'拼音数据加载中…', pinyinReady:'数据已就绪，开始新游戏后套用。', pinyinFail:'数据加载失败，请确认网络后再试。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'强', snapNote:'弱＝要放得很准；强＝靠近就吸住。' },
     'en': { settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both', langZh:'Chinese only',
+      textLabel:'✏️ Type the text you want for your puzzle (1–20 characters)', time:'Time', moves:'Moves', ranking:'Ranking', rankTitle:'Ranking · Top 10',
+      rankHint:'One best result per device; ranked by time, then by moves.', loading:'Loading…', lbEmpty:'No one is on the ranking yet. Be the first!', lbFail:'Could not load the ranking',
+      namePh:'Your name', save:'Save to ranking', nameErr:'Enter your name first.', saving:'Saving…', saved:'Saved to the ranking!', saveFail:'Could not save. Please try again.',
+      notBetter:'Your earlier result is better ({t}, {m} moves), so it was not updated.', music:'Background music (water drops and wind)', sfx:'Sound effects',
       poolHint:'Drag to sort · wheel to scroll',
       phonNote:'Pinyin / zhuyin apply from the next game and need internet to load.',
       pinyinLoading:'Loading data…', pinyinReady:'Ready. It applies when you start a new game.', pinyinFail:'Could not load data. Check your connection and try again.',
       snap:'Snap strength', snapWeak:'Weak', snapMid:'Medium', snapStrong:'Strong', snapNote:'Weak = place precisely; strong = snaps when close.' },
     'es': { settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos', langZh:'Solo chino',
+      textLabel:'✏️ Escribe el texto que quieres para tu rompecabezas (1–20 caracteres)', time:'Tiempo', moves:'Movimientos', ranking:'Ranking', rankTitle:'Ranking · Top 10',
+      rankHint:'Un mejor resultado por dispositivo; se ordena por tiempo y luego por movimientos.', loading:'Cargando…', lbEmpty:'Todavía no hay nadie en el ranking. ¡Sé el primero!', lbFail:'No se pudo cargar el ranking',
+      namePh:'Tu nombre', save:'Guardar en el ranking', nameErr:'Escribe tu nombre primero.', saving:'Guardando…', saved:'¡Guardado en el ranking!', saveFail:'No se pudo guardar. Inténtalo de nuevo.',
+      notBetter:'Tu resultado anterior es mejor ({t}, {m} mov.), no se actualizó.', music:'Música de fondo (gotas de agua y viento)', sfx:'Efectos de sonido',
       poolHint:'Arrastra · rueda para desplazar',
       phonNote:'El pinyin / zhuyin se aplica en la próxima partida y necesita internet.',
       pinyinLoading:'Cargando datos…', pinyinReady:'Listo. Se aplica al iniciar una nueva partida.', pinyinFail:'No se pudieron cargar los datos. Revisa tu conexión.',
@@ -208,13 +264,13 @@
   const $ = id => document.getElementById(id);
   const inText = $('inText'), selGrid = $('selGrid');
   const btnStart = $('btnStart'), btnTidy = $('btnTidy'), btnEdges = $('btnEdges');
-  const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound');
-  const timerEl = $('timer'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
+  const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound'), btnMusic = $('btnMusic'), btnRank = $('btnRank');
+  const timerEl = $('timer'), movesEl = $('moves'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
 
   let W = 800, H = 600;
   let G = null;            // 目前的遊戲
   let drag = null;
-  let showPreview = false, showFrame = false, soundOn = true;
+  let showPreview = false, showFrame = false;
   let timerId = 0, raf = 0;
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -227,11 +283,11 @@
      只有拼圖自己才有的「吸力」另外存在 'jigsaw_settings_v1'。 */
   const SHARED_KEY = 'hanziGames.settings';
   const SNAP_KEY = 'jigsaw_settings_v1';
-  const settings = { script: 'trad', lang: 'es', phon: 'pinyin', rate: 'normal', snap: 'mid' };
+  const settings = { script: 'trad', lang: 'es', phon: 'pinyin', rate: 'normal', snap: 'mid', music: true, sfx: true };
   const SNAP = { weak: .18, mid: .28, strong: .40 };
   const OK = {
     script: ['trad', 'simp'], lang: ['es', 'en', 'zh'], phon: ['pinyin', 'zhuyin', 'both', 'off'],
-    rate: ['slow', 'normal', 'fast'], snap: ['weak', 'mid', 'strong']
+    rate: ['slow', 'normal', 'fast'], snap: ['weak', 'mid', 'strong'], music: [true, false], sfx: [true, false]
   };
   (function loadSettings() {
     let shared = null, old = null;
@@ -246,7 +302,11 @@
       if (old.phon === 'none') settings.phon = 'off';
       else if (OK.phon.includes(old.phon)) settings.phon = old.phon;
     }
-    if (old && OK.snap.includes(old.snap)) settings.snap = old.snap;
+    if (old) {
+      if (OK.snap.includes(old.snap)) settings.snap = old.snap;
+      if (typeof old.music === 'boolean') settings.music = old.music;
+      if (typeof old.sfx === 'boolean') settings.sfx = old.sfx;
+    }
     if (!shared) setTimeout(saveSettings, 0);   // 第一次：把共用設定寫下來，別款遊戲才讀得到
   })();
   function saveSettings() {
@@ -256,7 +316,7 @@
       localStorage.setItem(SHARED_KEY, JSON.stringify(Object.assign(cur, {
         v: 1, script: settings.script, lang: settings.lang, phon: settings.phon, rate: settings.rate
       })));
-      localStorage.setItem(SNAP_KEY, JSON.stringify({ snap: settings.snap }));
+      localStorage.setItem(SNAP_KEY, JSON.stringify({ snap: settings.snap, music: settings.music, sfx: settings.sfx }));
     } catch (e) { /* ignore */ }
   }
 
@@ -664,7 +724,7 @@
     }
 
     G = {
-      cols, rows, N, P, S, m, sw, poolW, img, pieces,
+      cols, rows, N, n, P, S, m, sw, poolW, img, pieces, text: chars.join(''), moves: 0,
       order: pieces.map(p => p.id).sort(() => Math.random() - .5),
       scroll: 0, start: performance.now(), done: false, elapsed: 0
     };
@@ -682,7 +742,9 @@
     });
 
     drag = null;
+    lastResult = null;
     winEl.classList.add('hidden');
+    showMoves();
     startTimer();
     updateStatus();
     requestDraw();
@@ -908,7 +970,7 @@
       if (p.pool) {
         for (const q of members) { q.y -= G.scroll; q.pool = false; }
       }
-      drag = { mode: 'piece', members, set, lx: clamp(mx, 0, W), ly: clamp(my, 0, H) };
+      drag = { mode: 'piece', members, set, lx: clamp(mx, 0, W), ly: clamp(my, 0, H), dist: 0 };
       cv.style.cursor = 'grabbing';
       cv.setPointerCapture(e.pointerId);
       requestDraw();
@@ -933,6 +995,7 @@
     const mx = clamp(mx0, 0, W), my = clamp(my0, 0, H);
     const dx = mx - drag.lx, dy = my - drag.ly;
     drag.lx = mx; drag.ly = my;
+    drag.dist += Math.hypot(dx, dy);
     for (const q of drag.members) { q.x += dx; q.y += dy; }
     requestDraw();
   });
@@ -942,6 +1005,7 @@
     if (drag.mode === 'scroll') { drag = null; return; }
     const members = drag.members;
     const mx = drag.lx;
+    if (drag.dist > 6 && !G.done) { G.moves++; showMoves(); }   // 拿起、移動、放下 = 一次
     drag = null;
     cv.style.cursor = 'grab';
     if (mx < G.poolW) {
@@ -989,7 +1053,7 @@
     const { P, cols, rows, pieces } = G;
     const tol = P * SNAP[settings.snap];
     let merged = false, guard = 0;
-    while (guard++ < 30) {
+    while (guard++ < 500) {
       const mem = pieces.filter(q => q.g === gid);
       let found = null;
       outer:
@@ -1027,28 +1091,127 @@
       G.done = true;
       G.elapsed = performance.now() - G.start;
       timerEl.textContent = '⏱ ' + fmt(G.elapsed);
-      setBi(winMsg, 'winMsg', fmt(G.elapsed));
+      lastResult = { n: G.n, secs: Math.max(30, Math.min(99999, Math.round(G.elapsed / 1000))),
+        moves: Math.max(G.n * G.n, Math.min(9999, G.moves)), text: G.text, saved: false, saving: false, status: '' };
+      try { nameInput.value = localStorage.getItem('jigsaw_name') || ''; } catch (e) { /* ignore */ }
+      renderWinMsg();
+      renderSave();
+      winSound();
       const f = performance.now() + 600;
       G.pieces.forEach(p => { p.flash = f; });
       setTimeout(() => { winEl.classList.remove('hidden'); }, 700);
     }
   }
 
-  /* ---------- 音效 ---------- */
-  let audio = null;
+  /* ---------- 聲音：接合音效＋背景音樂（水滴聲與風聲，全部由程式合成） ---------- */
+  let actx = null, music = null;
+  function getCtx() {
+    try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; } catch (e) { return null; }
+  }
+  function tone(a, f0, f1, dur, vol, type) {
+    const o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime;
+    o.type = type || 'triangle';
+    o.frequency.setValueAtTime(f0, t0);
+    o.frequency.exponentialRampToValueAtTime(f1, t0 + dur * .7);
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t0); o.stop(t0 + dur + .02);
+  }
   function click() {
-    if (!soundOn) return;
+    if (!settings.sfx) return;
+    const a = getCtx(); if (!a) return;
+    try { if (a.state === 'suspended') a.resume(); tone(a, 560, 260, .1, .18); } catch (err) { /* 沒聲音也沒關係 */ }
+  }
+  function winSound() {
+    if (!settings.sfx) return;
+    const a = getCtx(); if (!a) return;
     try {
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audio.createOscillator(), g = audio.createGain(), t0 = audio.currentTime;
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(560, t0);
-      o.frequency.exponentialRampToValueAtTime(260, t0 + .07);
-      g.gain.setValueAtTime(.18, t0);
-      g.gain.exponentialRampToValueAtTime(.001, t0 + .1);
-      o.connect(g); g.connect(audio.destination);
-      o.start(t0); o.stop(t0 + .12);
-    } catch (err) { /* 沒聲音也沒關係 */ }
+      if (a.state === 'suspended') a.resume();
+      [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(a, f, f * 1.01, .35, .16, 'sine'), i * 140));
+    } catch (err) { /* ignore */ }
+  }
+  function windBuffer(a) {
+    const total = a.sampleRate * 8, fade = Math.floor(a.sampleRate * .6), len = total - fade;
+    const raw = new Float32Array(total);
+    let l = 0;
+    for (let i = 0; i < total; i++) { l = l * .985 + (Math.random() * 2 - 1) * .015; raw[i] = l * 9; }
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = raw[i];
+    for (let i = 0; i < fade; i++) { const t = i / fade; d[i] = raw[i] * t + raw[len + i] * (1 - t); }   // 首尾接起來，循環不會有「啪」一聲
+    return buf;
+  }
+  function drop(a, out) {
+    const t = a.currentTime, f = 520 + Math.random() * 520;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 2.1, t + .09);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(.09, t + .008);
+    g.gain.exponentialRampToValueAtTime(.001, t + .3);
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + .35);
+  }
+  function startMusic() {
+    if (!settings.music || music) return;
+    const a = getCtx(); if (!a) return;
+    try {
+      if (a.state === 'suspended') a.resume();
+      const t0 = a.currentTime;
+      const bus = a.createGain();
+      bus.gain.setValueAtTime(0, t0);
+      bus.gain.linearRampToValueAtTime(.9, t0 + 2);          // 慢慢淡入
+      bus.connect(a.destination);
+      // 風聲：低頻雜訊，經過濾波，音量和音色都慢慢起伏（像陣風）
+      const src = a.createBufferSource(); src.buffer = windBuffer(a); src.loop = true;
+      const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = .4;
+      const wg = a.createGain(); wg.gain.value = .07;
+      const l1 = a.createOscillator(), l1g = a.createGain(); l1.frequency.value = .09; l1g.gain.value = .04; l1.connect(l1g); l1g.connect(wg.gain);
+      const l2 = a.createOscillator(), l2g = a.createGain(); l2.frequency.value = .05; l2g.gain.value = 300; l2.connect(l2g); l2g.connect(lp.frequency);
+      src.connect(hp); hp.connect(lp); lp.connect(wg); wg.connect(bus);
+      src.start(); l1.start(); l2.start();
+      // 水滴：隨機間隔，帶一點回音
+      const echo = a.createDelay(1); echo.delayTime.value = .27;
+      const fb = a.createGain(); fb.gain.value = .38;
+      const ef = a.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 2400;
+      const dropBus = a.createGain();
+      dropBus.connect(bus); dropBus.connect(echo);
+      echo.connect(ef); ef.connect(fb); fb.connect(echo); ef.connect(bus);
+      const m = music = { a, bus, nodes: [src, l1, l2], timer: 0 };
+      const next = () => { m.timer = setTimeout(() => { drop(a, dropBus); next(); }, 1500 + Math.random() * 4500); };
+      next();
+    } catch (err) { music = null; }
+  }
+  function stopMusic() {
+    if (!music) return;
+    const m = music; music = null;
+    clearTimeout(m.timer);
+    try {
+      const t = m.a.currentTime;
+      m.bus.gain.cancelScheduledValues(t);
+      m.bus.gain.setValueAtTime(m.bus.gain.value, t);
+      m.bus.gain.linearRampToValueAtTime(0, t + .4);
+    } catch (err) { /* ignore */ }
+    setTimeout(() => {
+      m.nodes.forEach(n => { try { n.stop(); } catch (err) { /* ignore */ } });
+      try { m.bus.disconnect(); } catch (err) { /* ignore */ }
+    }, 600);
+  }
+  // 瀏覽器規定要先有點擊或按鍵才能出聲，所以「預設開啟」會在玩家第一次操作時開始
+  function unlockAudio() { if (settings.music && !music) startMusic(); }
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  document.addEventListener('visibilitychange', () => {
+    if (!actx) return;
+    if (document.hidden) actx.suspend(); else actx.resume();
+  });
+  function showSoundButtons() {
+    btnMusic.classList.toggle('on', settings.music);
+    btnMusic.textContent = settings.music ? '🎵' : '🎵✖';
+    btnSound.classList.toggle('on', settings.sfx);
+    btnSound.textContent = settings.sfx ? '🔊' : '🔇';
   }
 
   /* ---------- 整理拼圖池 ---------- */
@@ -1082,15 +1245,152 @@
     requestDraw();
   }
 
+  /* ---------- 移動次數 ---------- */
+  function showMoves() { movesEl.textContent = '👆 ' + (G ? G.moves : 0); }
+
+  /* ---------- 完成畫面與排行榜（Firebase，和其他遊戲共用同一個專案） ---------- */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_YSDn2OH6_GKKwCq0d8QFNl3fYXzTC60",
+    authDomain: "memorma-24dab.firebaseapp.com",
+    projectId: "memorma-24dab",
+    storageBucket: "memorma-24dab.firebasestorage.app",
+    messagingSenderId: "806709458465",
+    appId: "1:806709458465:web:f0d12acb2f911f2f165560"
+  };
+  let db = null, authReady = Promise.resolve(null), lastResult = null;
+  try {
+    if (window.firebase) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      authReady = firebase.auth().signInAnonymously().then(c => c.user.uid)
+        .catch(err => { console.error('Anonymous sign-in failed:', err); return null; });
+    }
+  } catch (e) { console.warn('Firebase not available:', e); }
+
+  const nameInput = $('nameInput'), saveMsg = $('saveMsg');
+  const rankOv = $('rankOv'), rankList = $('rankList'), rankMsg = $('rankMsg'), rankTabs = $('rankTabs');
+  const boardRef = n => db.collection('jigsaw_boards').doc(String(n)).collection('entries');
+  // 排名：時間越短越前面，時間一樣比移動次數
+  const rankOf = (secs, moves) => (99999 - secs) * 10000 + (9999 - moves);
+  const fill = (str, v) => String(str).replace('{t}', v.t).replace('{m}', v.m);
+
+  function renderWinMsg() {
+    if (!G) return;
+    const w = bi('winMsg'), mv = bi('moves');
+    winMsg.innerHTML = '';
+    const line = i => `${w[i]}${fmt(G.elapsed)}　${mv[i]}: ${G.moves}`;
+    const a = document.createElement('div'); a.textContent = line(0);
+    winMsg.appendChild(a);
+    if (w[1] && w[1] !== w[0]) {
+      const b = document.createElement('small'); b.style.color = '#666'; b.textContent = line(1);
+      winMsg.appendChild(b);
+    }
+  }
+  function renderSave() {
+    $('saveBtn').disabled = !!(lastResult && (lastResult.saved || lastResult.saving));
+    saveMsg.innerHTML = '';
+    if (!lastResult || !lastResult.status) return;
+    const v = lastResult.old ? { t: fmt(lastResult.old.secs), m: lastResult.old.moves } : { t: '', m: '' };
+    const [z, o] = bi(lastResult.status);
+    const a = document.createElement('div'); a.textContent = fill(z, v);
+    saveMsg.appendChild(a);
+    if (o && o !== z) { const b = document.createElement('small'); b.textContent = fill(o, v); saveMsg.appendChild(b); }
+  }
+  async function saveResult() {
+    const r = lastResult;
+    if (!r || r.saved || r.saving) return;
+    const name = nameInput.value.trim().slice(0, 14);
+    if (!name) { r.status = 'nameErr'; renderSave(); return; }
+    try { localStorage.setItem('jigsaw_name', name); } catch (e) { /* ignore */ }
+    r.saving = true; r.status = 'saving'; renderSave();
+    const rank = rankOf(r.secs, r.moves);
+    try {
+      const uid = await authReady;
+      if (!db || !uid) throw new Error('no firebase');
+      const ref = boardRef(r.n).doc(uid);
+      const snap = await ref.get();
+      if (snap.exists && (snap.data().rank || 0) >= rank) {
+        r.saved = true; r.status = 'notBetter'; r.old = snap.data();
+      } else {
+        await ref.set({ name, secs: r.secs, moves: r.moves, text: r.text, rank,
+          script: settings.script, lang: settings.lang,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        r.saved = true; r.status = 'saved';
+      }
+    } catch (err) {
+      console.error(err);
+      r.status = 'saveFail';
+    }
+    r.saving = false;
+    renderSave();
+  }
+
+  let rankSize = 10, rankReq = 0;
+  function setRankMsg(key) {
+    rankMsg.style.display = key ? 'block' : 'none';
+    if (key) setBi(rankMsg, key);
+  }
+  function renderRankTabs() {
+    rankTabs.innerHTML = '';
+    [8, 10, 12, 15].forEach(n => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = `${n} × ${n}`;
+      if (n === rankSize) b.classList.add('active');
+      b.addEventListener('click', () => { rankSize = n; renderRankTabs(); loadRank(); });
+      rankTabs.appendChild(b);
+    });
+  }
+  async function loadRank() {
+    const req = ++rankReq;
+    rankList.innerHTML = '';
+    setRankMsg('loading');
+    if (!db) { setRankMsg('lbFail'); return; }
+    try {
+      const uid = await authReady;
+      if (!uid) throw new Error('no auth');
+      const snap = await boardRef(rankSize).orderBy('rank', 'desc').limit(10).get();
+      if (req !== rankReq) return;
+      if (snap.empty) { setRankMsg('lbEmpty'); return; }
+      setRankMsg('');
+      let rk = 1;
+      snap.forEach(doc => {
+        const d = doc.data();
+        const li = document.createElement('li');
+        if (doc.id === uid) li.classList.add('me');
+        li.innerHTML = '<span class="rk"></span><span class="nm"><span></span><small></small></span><span class="res"></span>';
+        li.querySelector('.rk').textContent = rk++;
+        li.querySelector('.nm > span').textContent = String(d.name == null ? '' : d.name);   // 一律當純文字
+        li.querySelector('.nm small').textContent = String(d.text == null ? '' : d.text);
+        li.querySelector('.res').textContent = `⏱ ${fmt((Number(d.secs) || 0) * 1000)} · 👆 ${Number(d.moves) || 0}`;
+        rankList.appendChild(li);
+      });
+    } catch (err) {
+      if (req !== rankReq) return;
+      console.error(err);
+      setRankMsg('lbFail');
+    }
+  }
+  function openRank() {
+    if (G) rankSize = G.n;
+    renderRankTabs();
+    rankOv.classList.remove('hidden');
+    loadRank();
+  }
+
   /* ---------- 套用介面文字 ---------- */
   function applyUI() {
     document.documentElement.lang = settings.script === 'simp' ? 'zh-Hans' : 'zh-Hant';
     document.title = T('title');
     document.querySelectorAll('[data-i]').forEach(el => setBi(el, el.dataset.i));
     inText.placeholder = T('textPh');
+    nameInput.placeholder = T('namePh');
+    btnMusic.title = T('music');
+    btnSound.title = T('sfx');
+    showSoundButtons();
     const cur = selGrid.value || '10';
     selGrid.innerHTML = '';
-    [10, 12, 15].forEach(n => {
+    [8, 10, 12, 15].forEach(n => {
       const o = document.createElement('option');
       o.value = n;
       o.textContent = `${n} × ${n} (${n * n})`;
@@ -1101,7 +1401,7 @@
     setPinyinMsg(pinyinMsgKey);
     if (G) {
       updateStatus();
-      if (G.done) setBi(winMsg, 'winMsg', fmt(G.elapsed));
+      if (G.done) { renderWinMsg(); renderSave(); }
     }
     requestDraw();
   }
@@ -1124,7 +1424,18 @@
   btnEdges.addEventListener('click', () => tidy('edges'));
   btnPreview.addEventListener('click', () => { showPreview = !showPreview; btnPreview.classList.toggle('on', showPreview); requestDraw(); });
   btnFrame.addEventListener('click', () => { showFrame = !showFrame; btnFrame.classList.toggle('on', showFrame); requestDraw(); });
-  btnSound.addEventListener('click', () => { soundOn = !soundOn; btnSound.classList.toggle('on', soundOn); btnSound.textContent = soundOn ? '🔊' : '🔇'; });
+  btnSound.addEventListener('click', () => { settings.sfx = !settings.sfx; saveSettings(); showSoundButtons(); click(); });
+  btnMusic.addEventListener('click', () => {
+    settings.music = !settings.music; saveSettings(); showSoundButtons();
+    if (settings.music) startMusic(); else stopMusic();
+  });
+  btnRank.addEventListener('click', openRank);
+  $('winRank').addEventListener('click', openRank);
+  $('rankDone').addEventListener('click', () => rankOv.classList.add('hidden'));
+  rankOv.addEventListener('click', e => { if (e.target === rankOv) rankOv.classList.add('hidden'); });
+  $('saveBtn').addEventListener('click', saveResult);
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveResult(); });
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(stage);   // 標題區高度改變時，桌面跟著調整
   $('winAgain').addEventListener('click', () => { G.done = true; begin(); });
   $('winClose').addEventListener('click', () => winEl.classList.add('hidden'));
   window.addEventListener('resize', resize);
