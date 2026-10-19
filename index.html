@@ -175,22 +175,22 @@
       winTitle:'🎉 ¡Completado!', winMsg:'Tiempo: ', again:'Jugar otra vez', close:'Ver resultado' }
   };
   const I18N_EXTRA = {
-    'zh-TW': { settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者',
+    'zh-TW': { settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者', langZh:'只有中文',
       poolHint:'拖曳整理・滾輪捲動',
       phonNote:'拼音／注音從下一局（開始新遊戲）才會套用，需要網路載入資料。',
       pinyinLoading:'拼音資料載入中…', pinyinReady:'資料已就緒，開始新遊戲後套用。', pinyinFail:'資料載入失敗，請確認網路後再試。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'強', snapNote:'弱＝要放得很準；強＝靠近就吸住。' },
-    'zh-CN': { settings:'设置', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者',
+    'zh-CN': { settings:'设置', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者', langZh:'只有中文',
       poolHint:'拖曳整理・滚轮滚动',
       phonNote:'拼音／注音从下一局（开始新游戏）才会套用，需要网络加载数据。',
       pinyinLoading:'拼音数据加载中…', pinyinReady:'数据已就绪，开始新游戏后套用。', pinyinFail:'数据加载失败，请确认网络后再试。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'强', snapNote:'弱＝要放得很准；强＝靠近就吸住。' },
-    'en': { settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both',
+    'en': { settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both', langZh:'Chinese only',
       poolHint:'Drag to sort · wheel to scroll',
       phonNote:'Pinyin / zhuyin apply from the next game and need internet to load.',
       pinyinLoading:'Loading data…', pinyinReady:'Ready. It applies when you start a new game.', pinyinFail:'Could not load data. Check your connection and try again.',
       snap:'Snap strength', snapWeak:'Weak', snapMid:'Medium', snapStrong:'Strong', snapNote:'Weak = place precisely; strong = snaps when close.' },
-    'es': { settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos',
+    'es': { settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos', langZh:'Solo chino',
       poolHint:'Arrastra · rueda para desplazar',
       phonNote:'El pinyin / zhuyin se aplica en la próxima partida y necesita internet.',
       pinyinLoading:'Cargando datos…', pinyinReady:'Listo. Se aplica al iniciar una nueva partida.', pinyinFail:'No se pudieron cargar los datos. Revisa tu conexión.',
@@ -219,21 +219,52 @@
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  /* ---------- 設定（字體、語言、拼音／注音、吸力） ---------- */
-  const SETTINGS_KEY = 'jigsaw_settings_v1';
-  const settings = { script: 'trad', lang: 'es', phon: 'none', snap: 'mid' };
+  /* ---------- 設定（字體、語言、拼音／注音、吸力） ----------
+     字體、語言、拼音／注音和小狗找寶藏、跑吧！漢字、色數消消樂、比比看共用同一份設定：
+       localStorage 'hanziGames.settings'
+       { v:1, script:'trad'|'simp', lang:'es'|'en'|'zh', phon:'pinyin'|'zhuyin'|'both'|'off', rate:'slow'|'normal'|'fast' }
+     拼圖沒有語音，所以沒有語速選項，但寫回時會保留別款遊戲的 rate。
+     只有拼圖自己才有的「吸力」另外存在 'jigsaw_settings_v1'。 */
+  const SHARED_KEY = 'hanziGames.settings';
+  const SNAP_KEY = 'jigsaw_settings_v1';
+  const settings = { script: 'trad', lang: 'es', phon: 'pinyin', rate: 'normal', snap: 'mid' };
   const SNAP = { weak: .18, mid: .28, strong: .40 };
-  const OK = { script: ['trad', 'simp'], lang: ['es', 'en'], phon: ['none', 'pinyin', 'zhuyin', 'both'], snap: ['weak', 'mid', 'strong'] };
-  try {
-    const sv = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    Object.keys(OK).forEach(k => { if (OK[k].includes(sv[k])) settings[k] = sv[k]; });
-  } catch (e) { /* 沒有儲存也沒關係 */ }
-  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ } }
+  const OK = {
+    script: ['trad', 'simp'], lang: ['es', 'en', 'zh'], phon: ['pinyin', 'zhuyin', 'both', 'off'],
+    rate: ['slow', 'normal', 'fast'], snap: ['weak', 'mid', 'strong']
+  };
+  (function loadSettings() {
+    let shared = null, old = null;
+    try { shared = JSON.parse(localStorage.getItem(SHARED_KEY) || 'null'); } catch (e) { /* 沒有儲存也沒關係 */ }
+    try { old = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null'); } catch (e) { /* ignore */ }
+    if (shared && typeof shared === 'object') {
+      ['script', 'lang', 'phon', 'rate'].forEach(k => { if (OK[k].includes(shared[k])) settings[k] = shared[k]; });
+    } else if (old && typeof old === 'object') {
+      // 第一次用共用設定：把舊版拼圖的選擇搬過來（舊版的「無」現在叫 off）
+      if (OK.script.includes(old.script)) settings.script = old.script;
+      if (old.lang === 'es' || old.lang === 'en') settings.lang = old.lang;
+      if (old.phon === 'none') settings.phon = 'off';
+      else if (OK.phon.includes(old.phon)) settings.phon = old.phon;
+    }
+    if (old && OK.snap.includes(old.snap)) settings.snap = old.snap;
+    if (!shared) setTimeout(saveSettings, 0);   // 第一次：把共用設定寫下來，別款遊戲才讀得到
+  })();
+  function saveSettings() {
+    try {
+      let cur = {};
+      try { cur = JSON.parse(localStorage.getItem(SHARED_KEY) || '{}') || {}; } catch (e) { /* ignore */ }
+      localStorage.setItem(SHARED_KEY, JSON.stringify(Object.assign(cur, {
+        v: 1, script: settings.script, lang: settings.lang, phon: settings.phon, rate: settings.rate
+      })));
+      localStorage.setItem(SNAP_KEY, JSON.stringify({ snap: settings.snap }));
+    } catch (e) { /* ignore */ }
+  }
 
   const settingsOv = $('settingsOv'), btnSet = $('btnSet'), pinyinMsg = $('pinyinMsg');
   const zhKey = () => settings.script === 'simp' ? 'zh-CN' : 'zh-TW';
   // 中文一行＋所選外語一行
-  function bi(key) { return [I18N[zhKey()][key], I18N[settings.lang][key]]; }
+  // 「只有中文」(lang === 'zh') 時沒有第二行
+  function bi(key) { return [I18N[zhKey()][key], settings.lang === 'zh' ? undefined : I18N[settings.lang][key]]; }
   function T(key) {
     const [z, o] = bi(key);
     if (o === undefined || o === z) return z;
@@ -288,6 +319,50 @@
     return tone === 0 || tone === 5 ? '˙' + body : body + ZY_TONE[tone - 1];
   }
 
+  /* ---------- 台灣讀音 ----------
+     pinyin-pro 預設是大陸讀音。讀音以教育部《重編國語辭典修訂本》為準，
+     和跑吧！漢字句子管理工具、台灣生存日記用同一份「台灣讀音例外表」；
+     一、不的變調交給 pinyin-pro（toneSandhi）。發現哪個詞讀錯了，把它加進這張表就好。
+     做法：'詞': '拼音（每個字之間空一格，輕聲不標調）' */
+  const TW_PINYIN = {
+    '還是': 'hái shì', '還有': 'hái yǒu', '還要': 'hái yào', '還沒': 'hái méi', '還差': 'hái chà',
+    '嗎': 'ma', '誰': 'shéi', '幾': 'jǐ', '喔': 'ō', '唷': 'yō', '耶': 'ye', '啦': 'la', '囉': 'luo', '嗯': 'ēn', '欸': 'éi',
+    '什麼': 'shén me', '謝謝': 'xiè xie', '麻煩': 'má fan', '我們': 'wǒ men', '你們': 'nǐ men', '他們': 'tā men', '她們': 'tā men',
+    '東西': 'dōng xi', '朋友': 'péng yǒu', '覺得': 'jué de', '著': 'zhe', '只': 'zhǐ',
+    '著急': 'zháo jí', '告訴': 'gào su', '後面': 'hòu mian',
+    '同事': 'tóng shì', '會不會': 'huì bú huì', '時候': 'shí hou', '記得': 'jì de',
+    '蘋果': 'píng guǒ', '名字': 'míng zi', '這個': 'zhè ge', '那個': 'nà ge',
+    '垃圾': 'lè sè', '星期': 'xīng qí',
+    '睡覺': 'shuì jiào', '公車': 'gōng chē', '公車站': 'gōng chē zhàn', '休息': 'xiū xí', '衣服': 'yī fú',
+    '意思': 'yì si', '媽媽': 'mā ma', '對不起': 'duì bu qǐ', '有空': 'yǒu kòng', '便宜': 'pián yí'
+  };
+  // 連接詞「和」念 hàn；但下面這些詞裡的「和」不是連接詞，照一般讀音
+  const HE_WORDS = {
+    '和平': 'hé píng', '和氣': 'hé qì', '和諧': 'hé xié', '溫和': 'wēn hé', '暖和': 'nuǎn huo', '和善': 'hé shàn',
+    '和藹': 'hé ǎi', '和好': 'hé hǎo', '和解': 'hé jiě', '和睦': 'hé mù', '附和': 'fù hè', '共和': 'gòng hé',
+    '調和': 'tiáo hé', '柔和': 'róu hé', '緩和': 'huǎn hé', '平和': 'píng hé', '祥和': 'xiáng hé', '講和': 'jiǎng hé'
+  };
+  let twApplied = false;
+  function applyTaiwanReadings() {
+    if (twApplied || !window.pinyinPro || typeof window.pinyinPro.customPinyin !== 'function') return;
+    window.pinyinPro.customPinyin(Object.assign({}, TW_PINYIN, HE_WORDS));
+    twApplied = true;
+  }
+  // 每個字一個讀音；toneType 'symbol' 給拼音、'num' 給注音轉換用
+  function twReadings(str, toneType) {
+    const arr = window.pinyinPro.pinyin(str, { type: 'array', toneType, toneSandhi: true });
+    const keep = new Array(str.length).fill(false);        // 屬於「和」非連接詞用法的位置
+    Object.keys(HE_WORDS).forEach(w => {
+      for (let i = str.indexOf(w); i !== -1; i = str.indexOf(w, i + 1)) {
+        for (let j = 0; j < w.length; j++) keep[i + j] = true;
+      }
+    });
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '和' && !keep[i]) arr[i] = toneType === 'num' ? 'han4' : 'hàn';
+    }
+    return arr;
+  }
+
   /* ---------- 拼音資料（需要網路） ---------- */
   let pinyinMsgKey = 'phonNote';
   function setPinyinMsg(key) { pinyinMsgKey = key; setBi(pinyinMsg, key); }
@@ -297,15 +372,15 @@
     if (pinyinLoading) return pinyinLoading;
     pinyinLoading = new Promise(res => {
       const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js';
-      s.onload = () => res(!!window.pinyinPro);
+      s.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3.20.0/dist/index.js';
+      s.onload = () => { applyTaiwanReadings(); res(!!window.pinyinPro); };
       s.onerror = () => { pinyinLoading = null; res(false); };
       document.head.appendChild(s);
     });
     return pinyinLoading;
   }
   function wantPhonetics() {
-    if (settings.phon === 'none') { setPinyinMsg('phonNote'); return; }
+    if (settings.phon === 'off') { setPinyinMsg('phonNote'); return; }
     setPinyinMsg('pinyinLoading');
     loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
   }
@@ -313,8 +388,8 @@
   /* ---------- 設定視窗（分段按鈕，和其他遊戲一樣） ---------- */
   const SETTING_DEFS = [
     { key: 'script', label: 'setScript', opts: [['trad', null, '繁體'], ['simp', null, '简体']] },
-    { key: 'lang', label: 'lang', opts: [['es', null, 'Español'], ['en', null, 'English']] },
-    { key: 'phon', label: 'setPhon', opts: [['none', 'phonNone'], ['pinyin', null, 'Pinyin'], ['zhuyin', null, 'ㄅㄆㄇ'], ['both', 'phonBoth']] },
+    { key: 'lang', label: 'lang', opts: [['es', null, '中文＋Español'], ['en', null, '中文＋English'], ['zh', 'langZh']] },
+    { key: 'phon', label: 'setPhon', opts: [['pinyin', null, 'Pinyin'], ['zhuyin', null, 'ㄅㄆㄇ'], ['both', 'phonBoth'], ['off', 'phonNone']] },
     { key: 'snap', label: 'snap', note: 'snapNote', opts: [['weak', 'snapWeak'], ['mid', 'snapMid'], ['strong', 'snapStrong']] }
   ];
   function renderSettings() {
@@ -529,12 +604,12 @@
     const m = Math.ceil(P * .3) + 3;
     const sw = P + 2 * m;
     let ann = null;
-    if (settings.phon !== 'none' && window.pinyinPro) {
+    if (settings.phon !== 'off' && window.pinyinPro) {
       try {
+        applyTaiwanReadings();
         const str = chars.join('');
-        const py = settings.phon !== 'zhuyin' ? window.pinyinPro.pinyin(str, { type: 'array', toneType: 'symbol' }) : null;
-        const zy = settings.phon !== 'pinyin'
-          ? window.pinyinPro.pinyin(str, { type: 'array', toneType: 'num' }).map(toZhuyin) : null;
+        const py = settings.phon !== 'zhuyin' ? twReadings(str, 'symbol') : null;
+        const zy = settings.phon !== 'pinyin' ? twReadings(str, 'num').map(toZhuyin) : null;
         if ((!py || py.length === chars.length) && (!zy || zy.length === chars.length)) ann = { py, zy };
       } catch (err) { ann = null; }
     }
@@ -1033,7 +1108,7 @@
 
   /* ---------- 按鈕 ---------- */
   function begin() {
-    if (settings.phon !== 'none') loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
+    if (settings.phon !== 'off') loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
     else newGame();
   }
   function startNew() {
@@ -1057,9 +1132,9 @@
   /* ---------- 開始 ---------- */
   applyUI();
   resize();
-  if (settings.phon !== 'none') setPinyinMsg('pinyinLoading');
+  if (settings.phon !== 'off') setPinyinMsg('pinyinLoading');
   begin();
-  if (settings.phon !== 'none') loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
+  if (settings.phon !== 'off') loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
 })();
 </script>
 </body>
