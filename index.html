@@ -148,6 +148,14 @@
     z-index: 20;
   }
   #win.hidden { display: none; }
+  #gate {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.35);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 25;
+  }
+  #gate.hidden { display: none; }
+  #gate button { font-size: 1.6rem; padding: 16px 44px; border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.4); }
   small { display: block; font-size: .68em; font-weight: 400; opacity: .8; line-height: 1.2; }
   header [data-i] { display: inline-block; text-align: center; line-height: 1.2; }
   header h1[data-i] { text-align: left; display: block; }
@@ -257,6 +265,7 @@
       <button id="rankDone" class="primary done" data-i="done"></button>
     </div>
   </div>
+  <div id="gate" class="hidden"><button id="btnGo" class="primary"><span data-i="go"></span></button></div>
   <div id="win" class="hidden">
     <div class="card">
       <h2 data-i="winTitle"></h2>
@@ -334,25 +343,25 @@
   /* ---------- 多國語言 ---------- */
   const I18N = {
     'zh-TW': { title:'文字拼圖', lang:'語言', text:'拼圖文字', textPh:'輸入1～20個字', grid:'數量', pcs:'片',
-      start:'開始新遊戲', tidy:'整理拼圖池', edges:'邊角優先', preview:'完成圖', frame:'提示框',
+      start:'開始新遊戲', go:'▶ 開始', tidy:'整理拼圖池', edges:'邊角優先', preview:'完成圖', frame:'提示框',
       pool:'未使用的拼圖池', poolHint:'拖曳整理・滾輪或拖空白處捲動',
       largest:'完成度', inPool:'池中', onTable:'桌上',
       confirmNew:'要放棄目前的進度，開始新遊戲嗎？',
       winTitle:'🎉 拼好了！', winMsg:'完成時間：', again:'再玩一次', close:'看看成品' },
     'zh-CN': { title:'文字拼图', lang:'语言', text:'拼图文字', textPh:'输入1～20个字', grid:'数量', pcs:'片',
-      start:'开始新游戏', tidy:'整理拼图池', edges:'边角优先', preview:'完成图', frame:'提示框',
+      start:'开始新游戏', go:'▶ 开始', tidy:'整理拼图池', edges:'边角优先', preview:'完成图', frame:'提示框',
       pool:'未使用的拼图池', poolHint:'拖曳整理・滚轮或拖空白处滚动',
       largest:'完成度', inPool:'池中', onTable:'桌上',
       confirmNew:'要放弃目前的进度，开始新游戏吗？',
       winTitle:'🎉 拼好了！', winMsg:'完成时间：', again:'再玩一次', close:'看看成品' },
     'en': { title:'Chinese Jigsaw Puzzle', lang:'Language', text:'Puzzle text', textPh:'Type 1–20 characters', grid:'Size', pcs:'pcs',
-      start:'New game', tidy:'Tidy pool', edges:'Edges first', preview:'Preview', frame:'Guide frame',
+      start:'New game', go:'▶ Start', tidy:'Tidy pool', edges:'Edges first', preview:'Preview', frame:'Guide frame',
       pool:'Unused pieces', poolHint:'Drag to sort · wheel or drag empty area to scroll',
       largest:'Largest chunk', inPool:'In pool', onTable:'On table',
       confirmNew:'Give up current progress and start a new game?',
       winTitle:'🎉 Completed!', winMsg:'Time: ', again:'Play again', close:'View result' },
     'es': { title:'Rompecabezas de chino', lang:'Idioma', text:'Texto', textPh:'Escribe de 1 a 20 caracteres', grid:'Tamaño', pcs:'piezas',
-      start:'Nueva partida', tidy:'Ordenar banco', edges:'Bordes primero', preview:'Modelo', frame:'Marco guía',
+      start:'Nueva partida', go:'▶ Empezar', tidy:'Ordenar banco', edges:'Bordes primero', preview:'Modelo', frame:'Marco guía',
       pool:'Piezas sin usar', poolHint:'Arrastra para ordenar · rueda o arrastra el fondo para desplazar',
       largest:'Bloque mayor', inPool:'En banco', onTable:'En mesa',
       confirmNew:'¿Abandonar el progreso actual y empezar una partida nueva?',
@@ -535,7 +544,7 @@
   const inText = $('inText'), selGrid = $('selGrid'), selLevel = $('selLevel');
   const btnStart = $('btnStart'), btnTidy = $('btnTidy'), btnEdges = $('btnEdges');
   const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound'), btnMusic = $('btnMusic'), btnRank = $('btnRank');
-  const timerEl = $('timer'), movesEl = $('moves'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
+  const timerEl = $('timer'), movesEl = $('moves'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg'), gateEl = $('gate');
 
   let W = 800, H = 600;
   let G = null;            // 目前的遊戲
@@ -939,7 +948,14 @@
   }
 
   /* ---------- 開新遊戲 ---------- */
-  function newGame() {
+  /* 真的開始這一局：計時、遊玩紀錄 */
+  function launch() {
+    G.gate = false; G.start = performance.now(); G.elapsed = 0;
+    gateEl.classList.add('hidden');
+    try { window.HGPlays && HGPlays.start(G.n + (G.rotOn ? 'r' : '')); } catch (e) {}
+    startTimer();
+  }
+  function newGame(auto) {
     let chars = Array.from((inText.value || '').replace(/\s+/g, '')).slice(0, 20);
     if (!chars.length) chars = Array.from(DEFAULT_TEXT);
     inText.value = chars.join('');
@@ -1034,8 +1050,10 @@
     lastResult = null;
     winEl.classList.add('hidden');
     showMoves();
-    try{ window.HGPlays && HGPlays.start(n + (rotOn ? 'r' : '')); }catch(e){}
-    startTimer();
+    G.gate = !!auto;                       // 一打開頁面先停在「開始」按鈕前，按了才開始計時、才算一局
+    gateEl.classList.toggle('hidden', !auto);
+    if (auto) { clearInterval(timerId); timerEl.textContent = '⏱ 00:00'; }
+    else { launch(); }
     updateStatus();
     showHint();
     requestDraw();
@@ -2127,12 +2145,12 @@
   }
 
   /* ---------- 按鈕 ---------- */
-  function begin() {
-    if (settings.phon !== 'off') loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(); });
-    else newGame();
+  function begin(auto) {
+    if (settings.phon !== 'off') loadPinyin().then(ok => { if (!ok) setPinyinMsg('pinyinFail'); newGame(auto); });
+    else newGame(auto);
   }
   function startNew() {
-    if (G && !G.done && !confirm(T('confirmNew'))) return;
+    if (G && !G.done && !G.gate && !confirm(T('confirmNew'))) return;
     begin();
   }
   btnSet.addEventListener('click', () => { settingsOv.classList.remove('hidden'); });
@@ -2177,13 +2195,14 @@
   if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(stage);   // 標題區高度改變時，桌面跟著調整
   $('winAgain').addEventListener('click', () => { G.done = true; begin(); });
   $('winClose').addEventListener('click', () => winEl.classList.add('hidden'));
+  $('btnGo').addEventListener('click', () => { if (G && G.gate) launch(); });
   window.addEventListener('resize', resize);
 
   /* ---------- 開始 ---------- */
   applyUI();
   resize();
   if (settings.phon !== 'off') setPinyinMsg('pinyinLoading');
-  begin();
+  begin(true);
   if (settings.phon !== 'off') loadPinyin().then(ok => setPinyinMsg(ok ? 'pinyinReady' : 'pinyinFail'));
 })();
 </script>
