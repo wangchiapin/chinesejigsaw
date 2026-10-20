@@ -52,7 +52,15 @@
   #inText { width: 100%; height: 48px; font-size: 1.55rem; font-weight: 700; padding: 4px 14px;
     border: 3px solid #f0a030; border-radius: 10px; background: #fff; color: #1f2d3a; letter-spacing: 2px; }
   #inText:focus { outline: none; box-shadow: 0 0 0 4px rgba(240,160,48,.4); }
-  #selGrid { height: 48px; font-size: 1.1rem; }
+  #selGrid, #selLevel { height: 48px; font-size: 1.1rem; }
+  #helpBody { font-size: .92rem; line-height: 1.5; }
+  #helpBody h4 { margin: 16px 0 4px; font-size: 1rem; color: #ffd48a; }
+  #helpBody h4:first-child { margin-top: 4px; }
+  #helpBody h4 small, #helpBody li small { display: block; font-size: .86em; color: #b9c6d3; opacity: 1; margin-top: 1px; }
+  #helpBody ul { margin: 0; padding-left: 20px; }
+  #helpBody li { margin: 5px 0; }
+  #helpOv .panel { width: min(640px, 94vw); }
+  #rankTabs2 { margin-top: 8px; }
   #btnStart { height: 48px; font-size: 1.25rem; padding: 0 28px; }
   #btnStart small { font-size: .55em; }
 
@@ -126,6 +134,7 @@
       <span class="sep"></span>
       <button id="btnMusic" class="on">🎵</button>
       <button id="btnSound" class="on">🔊</button>
+      <button id="btnHelp">❓ <span data-i="help"></span></button>
       <button id="btnRank">🏆 <span data-i="ranking"></span></button>
       <button id="btnSet">⚙️ <span data-i="settings"></span></button>
       <span class="sep"></span>
@@ -139,6 +148,9 @@
     </label>
     <label class="sizefield"><span class="biglabel" data-i="grid"></span>
       <select id="selGrid"></select>
+    </label>
+    <label class="sizefield"><span class="biglabel" data-i="level"></span>
+      <select id="selLevel"></select>
     </label>
     <button id="btnStart" class="primary" data-i="start"></button>
   </div>
@@ -155,10 +167,18 @@
       <button id="settingsDone" class="primary done" data-i="done"></button>
     </div>
   </div>
+  <div id="helpOv" class="ov hidden">
+    <div class="panel">
+      <h3>❓ <span data-i="helpTitle"></span></h3>
+      <div id="helpBody"></div>
+      <button id="helpDone" class="primary done" data-i="done"></button>
+    </div>
+  </div>
   <div id="rankOv" class="ov hidden">
     <div class="panel">
       <h3>🏆 <span data-i="rankTitle"></span></h3>
       <div class="seg" id="rankTabs"></div>
+      <div class="seg" id="rankTabs2"></div>
       <div class="note" id="rankMsg"></div>
       <ol id="rankList"></ol>
       <div class="note" data-i="rankHint"></div>
@@ -253,6 +273,104 @@
       snap:'Fuerza de encaje', snapWeak:'Baja', snapMid:'Media', snapStrong:'Alta', snapNote:'Baja = colocar con precisión; alta = encaja al acercar.' }
   };
   Object.keys(I18N_EXTRA).forEach(k => Object.assign(I18N[k], I18N_EXTRA[k]));
+  const I18N_LV = {
+    'zh-TW': { level:'難度', lvEasy:'輕鬆', lvRot:'進階', help:'說明', helpTitle:'遊戲說明', poolHintRot:'R／滾輪旋轉・拖曳整理' },
+    'zh-CN': { level:'难度', lvEasy:'轻松', lvRot:'进阶', help:'说明', helpTitle:'游戏说明', poolHintRot:'R／滚轮旋转・拖曳整理' },
+    'en':    { level:'Level', lvEasy:'Easy', lvRot:'Advanced', help:'Help', helpTitle:'How to play', poolHintRot:'R / wheel: rotate · drag to sort' },
+    'es':    { level:'Nivel', lvEasy:'Fácil', lvRot:'Avanzado', help:'Ayuda', helpTitle:'Cómo jugar', poolHintRot:'R / rueda: girar · arrastra' }
+  };
+  Object.keys(I18N_LV).forEach(k => Object.assign(I18N[k], I18N_LV[k]));
+  // 遊戲說明（每個語言一份：標題＋條列）
+  const HELP = {
+    'zh-TW': [
+      ['🎯 目標', ['把拼圖池裡散落的拼圖片，拼回完整的文字圖。圖是你輸入的 1～20 個字，由左到右、由上到下排列。']],
+      ['🖐️ 基本操作', [
+        '用滑鼠拖曳拼圖片，放到桌面上。',
+        '兩片正確相鄰、靠近時，會「喀」一聲自動吸住；接好的整塊可以一起拖曳。',
+        '桌面可以同時拼好幾個不同的區塊，最後再接起來。',
+        '左邊的拼圖池：滾輪或拖曳空白處可以上下捲動；片子也可以拖來拖去自己整理。']],
+      ['🧩 難度（在上方「難度」選單選，下一局才會換）', [
+        '輕鬆：拼圖片不會旋轉，方向都是正的。',
+        '進階：每片一開始的方向是亂的，要先轉到正確的方向，才能和旁邊的片接合。',
+        '轉的方法：按 R 鍵順時針轉 90 度，Shift＋R 逆時針轉；或用滑鼠滾輪轉（往下滾＝順時針）。',
+        '拿著拼圖片時可以直接轉；沒拿著時，把滑鼠停在片上再按 R 或滾輪。拼圖池裡的滾輪是捲動，池裡的片請用 R 鍵轉。',
+        '接好的整塊會一起轉。每轉一下算一次移動。全部接好後，會自動轉正。']],
+      ['🛠️ 上方按鈕', [
+        '整理拼圖池：把池裡的片排整齊。　邊角優先：把角落和邊緣的片排在前面，方便先拼外框。',
+        '完成圖：顯示完成後的樣子。　提示框：在桌面顯示完成圖的範圍框。',
+        '🎵 背景音樂（水滴與風聲）、🔊 接合音效，可以分別開關。']],
+      ['🏆 排行榜', [
+        '依「片數」和「難度」分開排：先比時間，時間一樣比移動次數。',
+        '每台裝置每個榜只留最好的成績；不同字數、不同文字都放在同一個榜。拼好後輸入名字就能存。']],
+      ['⚙️ 設定', ['字體（繁／簡）、介面語言、拼音／注音（從下一局套用）、接合吸力（弱＝要放得很準；強＝靠近就吸住）。']]
+    ],
+    'zh-CN': [
+      ['🎯 目标', ['把拼图池里散落的拼图片，拼回完整的文字图。图是你输入的 1～20 个字，由左到右、由上到下排列。']],
+      ['🖐️ 基本操作', [
+        '用鼠标拖曳拼图片，放到桌面上。',
+        '两片正确相邻、靠近时，会“咔”一声自动吸住；接好的整块可以一起拖曳。',
+        '桌面可以同时拼好几个不同的区块，最后再接起来。',
+        '左边的拼图池：滚轮或拖曳空白处可以上下滚动；片子也可以拖来拖去自己整理。']],
+      ['🧩 难度（在上方“难度”菜单选，下一局才会换）', [
+        '轻松：拼图片不会旋转，方向都是正的。',
+        '进阶：每片一开始的方向是乱的，要先转到正确的方向，才能和旁边的片接合。',
+        '转的方法：按 R 键顺时针转 90 度，Shift＋R 逆时针转；或用鼠标滚轮转（往下滚＝顺时针）。',
+        '拿着拼图片时可以直接转；没拿着时，把鼠标停在片上再按 R 或滚轮。拼图池里的滚轮是滚动，池里的片请用 R 键转。',
+        '接好的整块会一起转。每转一下算一次移动。全部接好后，会自动转正。']],
+      ['🛠️ 上方按钮', [
+        '整理拼图池：把池里的片排整齐。　边角优先：把角落和边缘的片排在前面，方便先拼外框。',
+        '完成图：显示完成后的样子。　提示框：在桌面显示完成图的范围框。',
+        '🎵 背景音乐（水滴与风声）、🔊 接合音效，可以分别开关。']],
+      ['🏆 排行榜', [
+        '按“片数”和“难度”分开排：先比时间，时间一样比移动次数。',
+        '每台设备每个榜只留最好的成绩；不同字数、不同文字都放在同一个榜。拼好后输入名字就能保存。']],
+      ['⚙️ 设置', ['字体（繁／简）、界面语言、拼音／注音（从下一局应用）、接合吸力（弱＝要放得很准；强＝靠近就吸住）。']]
+    ],
+    'en': [
+      ['🎯 Goal', ['Put the scattered pieces from the box back together into the picture of your text (1–20 characters, left to right, top to bottom).']],
+      ['🖐️ Basics', [
+        'Drag pieces with the mouse onto the table.',
+        'When two pieces that belong together are close, they snap with a click. A joined block moves as one.',
+        'You can build several separate areas on the table and join them at the end.',
+        'The box on the left: scroll with the wheel or drag the empty space. You can also drag pieces around to sort them.']],
+      ['🧩 Level (pick it in the “Level” menu at the top; it changes on the next game)', [
+        'Easy: pieces never rotate; they are always upright.',
+        'Advanced: every piece starts turned a random way. Turn it the right way up before it can join its neighbours.',
+        'To turn: press R for 90° clockwise, Shift+R for counter-clockwise, or use the mouse wheel (scroll down = clockwise).',
+        'While holding a piece you can turn it right away; otherwise hover over it and press R or use the wheel. In the box the wheel scrolls, so use R there.',
+        'A joined block turns as one. Each turn counts as one move. When everything is joined it straightens itself.']],
+      ['🛠️ Top buttons', [
+        'Sort box: tidies the pieces in the box. Edges first: puts corners and edges first so you can build the frame.',
+        'Model: shows the finished picture. Guide frame: shows the outline on the table.',
+        '🎵 background music (water drops and wind) and 🔊 snap sound can be switched on and off separately.']],
+      ['🏆 Ranking', [
+        'Separate boards for each size and level: ranked by time, then by moves.',
+        'One best result per device per board; different texts share the same board. Enter your name after finishing to save.']],
+      ['⚙️ Settings', ['Characters (traditional/simplified), language, pinyin / zhuyin (applies from the next game), snap strength (weak = place precisely; strong = snaps when close).']]
+    ],
+    'es': [
+      ['🎯 Objetivo', ['Vuelve a armar con las piezas sueltas del banco la imagen de tu texto (1–20 caracteres, de izquierda a derecha y de arriba abajo).']],
+      ['🖐️ Lo básico', [
+        'Arrastra las piezas con el ratón hasta la mesa.',
+        'Cuando dos piezas que van juntas están cerca, encajan con un clic. Un bloque unido se mueve entero.',
+        'Puedes armar varias zonas separadas en la mesa y unirlas al final.',
+        'El banco de la izquierda: desplázalo con la rueda o arrastrando el fondo. También puedes arrastrar las piezas para ordenarlas.']],
+      ['🧩 Nivel (se elige en el menú «Nivel» de arriba; cambia en la próxima partida)', [
+        'Fácil: las piezas no giran; siempre están derechas.',
+        'Avanzado: cada pieza empieza girada al azar. Hay que ponerla en la posición correcta para que encaje con sus vecinas.',
+        'Para girar: pulsa R (90° a la derecha), Shift+R (a la izquierda) o usa la rueda del ratón (hacia abajo = derecha).',
+        'Con una pieza en la mano puedes girarla directamente; si no, pon el ratón encima y pulsa R o usa la rueda. En el banco la rueda desplaza, así que allí usa R.',
+        'Un bloque unido gira entero. Cada giro cuenta como un movimiento. Al unir todo, se endereza solo.']],
+      ['🛠️ Botones de arriba', [
+        'Ordenar banco: acomoda las piezas del banco. Bordes primero: pone esquinas y bordes delante para armar el marco.',
+        'Modelo: muestra la imagen terminada. Marco guía: muestra el contorno en la mesa.',
+        '🎵 música de fondo (gotas de agua y viento) y 🔊 sonido de encaje se activan por separado.']],
+      ['🏆 Ranking', [
+        'Hay un ranking para cada tamaño y nivel: se ordena por tiempo y luego por movimientos.',
+        'Un mejor resultado por dispositivo en cada ranking; textos distintos comparten el mismo. Al terminar, escribe tu nombre para guardar.']],
+      ['⚙️ Ajustes', ['Caracteres (tradicional/simplificado), idioma, pinyin / zhuyin (desde la próxima partida), fuerza de encaje (baja = colocar con precisión; alta = encaja al acercar).']]
+    ]
+  };
   const FONT = '"Noto Sans TC","Noto Sans SC","PingFang TC","PingFang SC","Microsoft JhengHei","Microsoft YaHei","Heiti TC",sans-serif';
   const DEFAULT_TEXT = '拼圖遊戲';
 
@@ -262,7 +380,7 @@
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
   const $ = id => document.getElementById(id);
-  const inText = $('inText'), selGrid = $('selGrid');
+  const inText = $('inText'), selGrid = $('selGrid'), selLevel = $('selLevel');
   const btnStart = $('btnStart'), btnTidy = $('btnTidy'), btnEdges = $('btnEdges');
   const btnPreview = $('btnPreview'), btnFrame = $('btnFrame'), btnSound = $('btnSound'), btnMusic = $('btnMusic'), btnRank = $('btnRank');
   const timerEl = $('timer'), movesEl = $('moves'), statusEl = $('status'), winEl = $('win'), winMsg = $('winMsg');
@@ -283,11 +401,11 @@
      只有拼圖自己才有的「吸力」另外存在 'jigsaw_settings_v1'。 */
   const SHARED_KEY = 'hanziGames.settings';
   const SNAP_KEY = 'jigsaw_settings_v1';
-  const settings = { script: 'trad', lang: 'es', phon: 'pinyin', rate: 'normal', snap: 'mid', music: true, sfx: true };
+  const settings = { script: 'trad', lang: 'es', phon: 'pinyin', rate: 'normal', snap: 'mid', music: true, sfx: true, level: 'easy' };
   const SNAP = { weak: .18, mid: .28, strong: .40 };
   const OK = {
     script: ['trad', 'simp'], lang: ['es', 'en', 'zh'], phon: ['pinyin', 'zhuyin', 'both', 'off'],
-    rate: ['slow', 'normal', 'fast'], snap: ['weak', 'mid', 'strong'], music: [true, false], sfx: [true, false]
+    rate: ['slow', 'normal', 'fast'], snap: ['weak', 'mid', 'strong'], music: [true, false], sfx: [true, false], level: ['easy', 'rot']
   };
   (function loadSettings() {
     let shared = null, old = null;
@@ -306,6 +424,7 @@
       if (OK.snap.includes(old.snap)) settings.snap = old.snap;
       if (typeof old.music === 'boolean') settings.music = old.music;
       if (typeof old.sfx === 'boolean') settings.sfx = old.sfx;
+      if (OK.level.includes(old.level)) settings.level = old.level;
     }
     if (!shared) setTimeout(saveSettings, 0);   // 第一次：把共用設定寫下來，別款遊戲才讀得到
   })();
@@ -316,7 +435,7 @@
       localStorage.setItem(SHARED_KEY, JSON.stringify(Object.assign(cur, {
         v: 1, script: settings.script, lang: settings.lang, phon: settings.phon, rate: settings.rate
       })));
-      localStorage.setItem(SNAP_KEY, JSON.stringify({ snap: settings.snap, music: settings.music, sfx: settings.sfx }));
+      localStorage.setItem(SNAP_KEY, JSON.stringify({ snap: settings.snap, music: settings.music, sfx: settings.sfx, level: settings.level }));
     } catch (e) { /* ignore */ }
   }
 
@@ -656,6 +775,8 @@
 
     const n = parseInt(selGrid.value, 10);
     const cols = n, rows = n, N = n * n;
+    const level = settings.level === 'rot' ? 'rot' : 'easy';
+    const rotOn = level === 'rot';
     const poolW = Math.round(clamp(W * .27, 250, 400));
     const tableW = W - poolW;
     const S0 = Math.min(H * .86, tableW * .84, 700);
@@ -717,14 +838,14 @@
         const corner = (r === 0 || r === rows - 1) && (c === 0 || c === cols - 1);
         const border = r === 0 || r === rows - 1 || c === 0 || c === cols - 1;
         pieces.push({
-          id: r * cols + c, r, c, x: 0, y: 0, pool: true, g: r * cols + c,
+          id: r * cols + c, r, c, x: 0, y: 0, pool: true, g: r * cols + c, rot: rotOn ? Math.floor(Math.random() * 4) : 0,
           path, sprite: sc, flash: 0, type: corner ? 0 : (border ? 1 : 2)
         });
       }
     }
 
     G = {
-      cols, rows, N, n, P, S, m, sw, poolW, img, pieces, text: chars.join(''), moves: 0,
+      cols, rows, N, n, P, S, m, sw, poolW, img, pieces, text: chars.join(''), moves: 0, level, rotOn,
       order: pieces.map(p => p.id).sort(() => Math.random() - .5),
       scroll: 0, start: performance.now(), done: false, elapsed: 0
     };
@@ -791,7 +912,14 @@
   function requestDraw() { if (!raf) raf = requestAnimationFrame(draw); }
 
   function drawPiece(p, x, y) {
-    ctx.drawImage(p.sprite, x - G.m, y - G.m, G.sw, G.sw);
+    const k = p.rot | 0;
+    if (!k) { ctx.drawImage(p.sprite, x - G.m, y - G.m, G.sw, G.sw); return; }
+    const h = G.P / 2;
+    ctx.save();
+    ctx.translate(x + h, y + h);
+    ctx.rotate(k * Math.PI / 2);
+    ctx.drawImage(p.sprite, -h - G.m, -h - G.m, G.sw, G.sw);
+    ctx.restore();
   }
 
   function maxScroll() {
@@ -876,7 +1004,7 @@
     fit(poolTitle, 14, 'bold', 9);
     ctx.fillText(poolTitle, 16, 20);
     ctx.fillStyle = 'rgba(255,255,255,.7)';
-    const hint = T('poolHint');
+    const hint = T(G.rotOn ? 'poolHintRot' : 'poolHint');
     fit(hint, 10.5, 'normal', 8);
     ctx.fillText(hint, 16, 35);
 
@@ -944,13 +1072,11 @@
     let found = null;
     for (let i = G.order.length - 1; i >= 0; i--) {
       const p = G.pieces[G.order[i]];
-      let lx, ly;
-      if (p.pool) {
-        if (mx >= G.poolW - 8 || my < 44) continue;
-        lx = mx - p.x; ly = my + G.scroll - p.y;
-      } else {
-        lx = mx - p.x; ly = my - p.y;
-      }
+      if (p.pool && (mx >= G.poolW - 8 || my < 44)) continue;
+      const hh = G.P / 2;
+      let dx = mx - (p.x + hh), dy = my - ((p.pool ? p.y - G.scroll : p.y) + hh);
+      for (let k = p.rot | 0; k > 0; k--) { const t = dx; dx = dy; dy = -t; }   // 轉回正的方向再判斷
+      const lx = dx + hh, ly = dy + hh;
       if (ctx.isPointInPath(p.path, lx, ly) || ctx.isPointInStroke(p.path, lx, ly)) { found = p; break; }
     }
     ctx.restore();
@@ -958,6 +1084,7 @@
   }
 
   /* ---------- 拖曳 ---------- */
+  const hover = { x: 0, y: 0, on: false };
   cv.addEventListener('pointerdown', e => {
     if (!G || e.button > 0) return;
     const [mx, my] = pos(e);
@@ -970,7 +1097,7 @@
       if (p.pool) {
         for (const q of members) { q.y -= G.scroll; q.pool = false; }
       }
-      drag = { mode: 'piece', members, set, lx: clamp(mx, 0, W), ly: clamp(my, 0, H), dist: 0 };
+      drag = { mode: 'piece', members, set, anchor: p, lx: clamp(mx, 0, W), ly: clamp(my, 0, H), dist: 0 };
       cv.style.cursor = 'grabbing';
       cv.setPointerCapture(e.pointerId);
       requestDraw();
@@ -983,6 +1110,7 @@
   cv.addEventListener('pointermove', e => {
     if (!G) return;
     const [mx0, my0] = pos(e);
+    hover.x = mx0; hover.y = my0; hover.on = true;
     if (!drag) {
       cv.style.cursor = hit(mx0, my0) ? 'grab' : 'default';
       return;
@@ -999,6 +1127,8 @@
     for (const q of drag.members) { q.x += dx; q.y += dy; }
     requestDraw();
   });
+
+  cv.addEventListener('pointerleave', () => { hover.on = false; });
 
   function endDrag() {
     if (!drag) return;
@@ -1022,9 +1152,61 @@
   cv.addEventListener('pointerup', endDrag);
   cv.addEventListener('pointercancel', endDrag);
 
+  /* ---------- 旋轉（進階難度）：R 鍵、滾輪 ---------- */
+  // 以 (cx, cy) 為中心，把一組拼圖片轉 90 度（dir = 1 順時針、-1 逆時針）
+  function rotateSet(members, dir, cx, cy) {
+    const h = G.P / 2;
+    for (const q of members) {
+      const dx = q.x + h - cx, dy = q.y + h - cy;
+      const nx = dir > 0 ? -dy : dy, ny = dir > 0 ? dx : -dx;
+      q.x = cx + nx - h; q.y = cy + ny - h;
+      q.rot = (((q.rot | 0) + dir) % 4 + 4) % 4;
+    }
+  }
+  function rotSound() {
+    if (!settings.sfx) return;
+    const a = getCtx(); if (!a) return;
+    try { if (a.state === 'suspended') a.resume(); tone(a, 330, 420, .06, .08, 'sine'); } catch (err) { /* ignore */ }
+  }
+  function doRotate(dir, mx, my) {
+    if (!G || !G.rotOn || G.done) return;
+    let members, pv;
+    if (drag && drag.mode === 'piece') { members = drag.members; pv = drag.anchor; }
+    else {
+      const p = hit(mx, my);
+      if (!p) return;
+      pv = p; members = G.pieces.filter(q => q.g === p.g);
+    }
+    rotateSet(members, dir, pv.x + G.P / 2, pv.y + G.P / 2);
+    G.moves++; showMoves();
+    rotSound();
+    if (!(drag && drag.mode === 'piece') && !pv.pool) { trySnap(pv.g); updateStatus(); checkWin(); }
+    requestDraw();
+  }
+  window.addEventListener('keydown', e => {
+    if (!G || !G.rotOn || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key !== 'r' && e.key !== 'R') return;
+    const t = e.target && e.target.tagName;
+    if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA') return;
+    if (!(drag && drag.mode === 'piece') && !hover.on) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    doRotate(e.shiftKey ? -1 : 1, hover.x, hover.y);
+  });
+  let wheelAcc = 0, wheelAt = 0;
   cv.addEventListener('wheel', e => {
     if (!G) return;
-    const [mx] = pos(e);
+    const [mx, my] = pos(e);
+    if (G.rotOn && !G.done && ((drag && drag.mode === 'piece') || mx >= G.poolW)) {
+      e.preventDefault();
+      wheelAcc += e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+      const now = performance.now();
+      if (Math.abs(wheelAcc) >= 40 && now - wheelAt > 130) {
+        doRotate(wheelAcc > 0 ? 1 : -1, my === undefined ? 0 : mx, my);
+        wheelAcc = 0; wheelAt = now;
+      }
+      return;
+    }
     if (mx < G.poolW) {
       e.preventDefault();
       G.scroll = clamp(G.scroll + e.deltaY, 0, maxScroll());
@@ -1063,7 +1245,10 @@
           if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
           const q = pieces[r * cols + c];
           if (q.g === gid || q.pool) continue;
-          const ex = p.x + dc * P, ey = p.y + dr * P;   // q 正確的位置
+          if ((q.rot | 0) !== (p.rot | 0)) continue;     // 方向不同不能接
+          let rx = dc * P, ry = dr * P;
+          for (let k = p.rot | 0; k > 0; k--) { const t = rx; rx = -ry; ry = t; }   // 隨旋轉轉方向
+          const ex = p.x + rx, ey = p.y + ry;           // q 正確的位置
           if (Math.hypot(q.x - ex, q.y - ey) < tol) { found = { q, mx: q.x - ex, my: q.y - ey }; break outer; }
         }
       }
@@ -1088,10 +1273,15 @@
     if (G.done) return;
     const g0 = G.pieces[0].g;
     if (G.pieces.every(p => p.g === g0 && !p.pool)) {
+      if (G.rotOn && G.pieces[0].rot) {                 // 全部接好但整張是歪的：自動轉正
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        G.pieces.forEach(p => { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + G.P); y1 = Math.max(y1, p.y + G.P); });
+        for (let k = (4 - G.pieces[0].rot) % 4; k > 0; k--) rotateSet(G.pieces, 1, (x0 + x1) / 2, (y0 + y1) / 2);
+      }
       G.done = true;
       G.elapsed = performance.now() - G.start;
       timerEl.textContent = '⏱ ' + fmt(G.elapsed);
-      lastResult = { n: G.n, secs: Math.max(30, Math.min(99999, Math.round(G.elapsed / 1000))),
+      lastResult = { n: G.n, board: G.n + (G.rotOn ? 'r' : ''), secs: Math.max(30, Math.min(99999, Math.round(G.elapsed / 1000))),
         moves: Math.max(G.n * G.n, Math.min(9999, G.moves)), text: G.text, saved: false, saving: false, status: '' };
       try { nameInput.value = localStorage.getItem('jigsaw_name') || ''; } catch (e) { /* ignore */ }
       renderWinMsg();
@@ -1307,7 +1497,7 @@
     try {
       const uid = await authReady;
       if (!db || !uid) throw new Error('no firebase');
-      const ref = boardRef(r.n).doc(uid);
+      const ref = boardRef(r.board).doc(uid);
       const snap = await ref.get();
       if (snap.exists && (snap.data().rank || 0) >= rank) {
         r.saved = true; r.status = 'notBetter'; r.old = snap.data();
@@ -1325,7 +1515,7 @@
     renderSave();
   }
 
-  let rankSize = 10, rankReq = 0;
+  let rankSize = 10, rankLevel = 'easy', rankReq = 0;
   function setRankMsg(key) {
     rankMsg.style.display = key ? 'block' : 'none';
     if (key) setBi(rankMsg, key);
@@ -1340,6 +1530,16 @@
       b.addEventListener('click', () => { rankSize = n; renderRankTabs(); loadRank(); });
       rankTabs.appendChild(b);
     });
+    const rt2 = $('rankTabs2');
+    rt2.innerHTML = '';
+    [['easy', 'lvEasy'], ['rot', 'lvRot']].forEach(([v, key]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      setBi(b, key);
+      if (v === rankLevel) b.classList.add('active');
+      b.addEventListener('click', () => { rankLevel = v; renderRankTabs(); loadRank(); });
+      rt2.appendChild(b);
+    });
   }
   async function loadRank() {
     const req = ++rankReq;
@@ -1349,7 +1549,7 @@
     try {
       const uid = await authReady;
       if (!uid) throw new Error('no auth');
-      const snap = await boardRef(rankSize).orderBy('rank', 'desc').limit(10).get();
+      const snap = await boardRef(rankSize + (rankLevel === 'rot' ? 'r' : '')).orderBy('rank', 'desc').limit(10).get();
       if (req !== rankReq) return;
       if (snap.empty) { setRankMsg('lbEmpty'); return; }
       setRankMsg('');
@@ -1372,10 +1572,31 @@
     }
   }
   function openRank() {
-    if (G) rankSize = G.n;
+    if (G) { rankSize = G.n; rankLevel = G.level; }
     renderRankTabs();
     rankOv.classList.remove('hidden');
     loadRank();
+  }
+
+  /* ---------- 遊戲說明 ---------- */
+  function renderHelp() {
+    const zh = HELP[zhKey()], other = settings.lang === 'zh' ? null : HELP[settings.lang];
+    const body = $('helpBody');
+    body.innerHTML = '';
+    zh.forEach(([title, items], i) => {
+      const h = document.createElement('h4');
+      h.textContent = title;
+      if (other) { const s = document.createElement('small'); s.textContent = other[i][0]; h.appendChild(s); }
+      body.appendChild(h);
+      const ul = document.createElement('ul');
+      items.forEach((txt, j) => {
+        const li = document.createElement('li');
+        li.textContent = txt;
+        if (other) { const s = document.createElement('small'); s.textContent = other[i][1][j]; li.appendChild(s); }
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    });
   }
 
   /* ---------- 套用介面文字 ---------- */
@@ -1397,6 +1618,14 @@
       selGrid.appendChild(o);
     });
     selGrid.value = cur;
+    selLevel.innerHTML = '';
+    [['easy', 'lvEasy'], ['rot', 'lvRot']].forEach(([v, key]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = T(key);
+      selLevel.appendChild(o);
+    });
+    selLevel.value = settings.level;
+    renderHelp();
     renderSettings();
     setPinyinMsg(pinyinMsgKey);
     if (G) {
@@ -1429,6 +1658,11 @@
     settings.music = !settings.music; saveSettings(); showSoundButtons();
     if (settings.music) startMusic(); else stopMusic();
   });
+  const helpOv = $('helpOv');
+  $('btnHelp').addEventListener('click', () => { helpOv.classList.remove('hidden'); });
+  $('helpDone').addEventListener('click', () => helpOv.classList.add('hidden'));
+  helpOv.addEventListener('click', e => { if (e.target === helpOv) helpOv.classList.add('hidden'); });
+  selLevel.addEventListener('change', () => { settings.level = selLevel.value === 'rot' ? 'rot' : 'easy'; saveSettings(); });
   btnRank.addEventListener('click', openRank);
   $('winRank').addEventListener('click', openRank);
   $('rankDone').addEventListener('click', () => rankOv.classList.add('hidden'));
