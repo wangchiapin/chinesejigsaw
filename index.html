@@ -292,13 +292,13 @@
     'zh-TW': { title:'文字拼圖', lang:'語言', text:'拼圖文字', textPh:'輸入1～20個字', grid:'數量', pcs:'片',
       start:'開始新遊戲', tidy:'整理拼圖池', edges:'邊角優先', preview:'完成圖', frame:'提示框',
       pool:'未使用的拼圖池', poolHint:'拖曳整理・滾輪或拖空白處捲動',
-      largest:'最大一塊', inPool:'池中', onTable:'桌上',
+      largest:'完成度', inPool:'池中', onTable:'桌上',
       confirmNew:'要放棄目前的進度，開始新遊戲嗎？',
       winTitle:'🎉 拼好了！', winMsg:'完成時間：', again:'再玩一次', close:'看看成品' },
     'zh-CN': { title:'文字拼图', lang:'语言', text:'拼图文字', textPh:'输入1～20个字', grid:'数量', pcs:'片',
       start:'开始新游戏', tidy:'整理拼图池', edges:'边角优先', preview:'完成图', frame:'提示框',
       pool:'未使用的拼图池', poolHint:'拖曳整理・滚轮或拖空白处滚动',
-      largest:'最大一块', inPool:'池中', onTable:'桌上',
+      largest:'完成度', inPool:'池中', onTable:'桌上',
       confirmNew:'要放弃目前的进度，开始新游戏吗？',
       winTitle:'🎉 拼好了！', winMsg:'完成时间：', again:'再玩一次', close:'看看成品' },
     'en': { title:'Chinese Jigsaw Puzzle', lang:'Language', text:'Puzzle text', textPh:'Type 1–20 characters', grid:'Size', pcs:'pcs',
@@ -1024,7 +1024,7 @@
     }
     const big = Math.max(...cnt.values());
     const line = (i) => ['largest', 'inPool', 'onTable'].map((k, j) => {
-      const v = j === 0 ? `${big} / ${G.N}` : (j === 1 ? pc : G.N - pc);
+      const v = j === 0 ? (i === 0 ? `${Math.floor(big * 100 / G.N)}%` : `${big} / ${G.N}`) : (j === 1 ? pc : G.N - pc);
       return `${bi(k)[i]}: ${v}`;
     }).join(i === 0 ? '　' : ' · ');
     statusEl.innerHTML = '';
