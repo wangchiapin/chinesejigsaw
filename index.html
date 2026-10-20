@@ -354,10 +354,10 @@
   };
   Object.keys(I18N_EXTRA).forEach(k => Object.assign(I18N[k], I18N_EXTRA[k]));
   const I18N_LV = {
-    'zh-TW': { level:'難度', lvEasy:'輕鬆', lvRot:'進階', help:'說明', helpTitle:'遊戲說明', poolHintRot:'R／滾輪旋轉・拖曳整理' },
-    'zh-CN': { level:'难度', lvEasy:'轻松', lvRot:'进阶', help:'说明', helpTitle:'游戏说明', poolHintRot:'R／滚轮旋转・拖曳整理' },
-    'en':    { level:'Level', lvEasy:'Easy', lvRot:'Advanced', help:'Help', helpTitle:'How to play', poolHintRot:'R / wheel: rotate · drag to sort' },
-    'es':    { level:'Nivel', lvEasy:'Fácil', lvRot:'Avanzado', help:'Ayuda', helpTitle:'Cómo jugar', poolHintRot:'R / rueda: girar · arrastra' }
+    'zh-TW': { level:'難度', lvEasy:'輕鬆', lvRot:'進階', help:'說明', helpTitle:'遊戲說明', poolHintRot:'R／滾輪／雙擊旋轉・拖曳整理' },
+    'zh-CN': { level:'难度', lvEasy:'轻松', lvRot:'进阶', help:'说明', helpTitle:'游戏说明', poolHintRot:'R／滚轮／双击旋转・拖曳整理' },
+    'en':    { level:'Level', lvEasy:'Easy', lvRot:'Advanced', help:'Help', helpTitle:'How to play', poolHintRot:'R / wheel / double-click: rotate · drag to sort' },
+    'es':    { level:'Nivel', lvEasy:'Fácil', lvRot:'Avanzado', help:'Ayuda', helpTitle:'Cómo jugar', poolHintRot:'R / rueda / doble clic: girar · arrastra' }
   };
   Object.keys(I18N_LV).forEach(k => Object.assign(I18N[k], I18N_LV[k]));
   const I18N_M = {
@@ -384,8 +384,8 @@
       ['🧩 難度（在上方「難度」選單選，下一局才會換）', [
         '輕鬆：拼圖片不會旋轉，方向都是正的。',
         '進階：每片一開始的方向是亂的，要先轉到正確的方向，才能和旁邊的片接合。',
-        '轉的方法：按 R 鍵順時針轉 90 度，Shift＋R 逆時針轉；或用滑鼠滾輪轉（往下滾＝順時針）。',
-        '拿著拼圖片時可以直接轉；沒拿著時，把滑鼠停在片上再按 R 或滾輪。拼圖池裡的滾輪是捲動，池裡的片請用 R 鍵轉。',
+        '轉的方法：按 R 鍵順時針轉 90 度，Shift＋R 逆時針轉；或用滑鼠滾輪轉（往下滾＝順時針）；滑鼠在片上快點兩下（雙擊）＝順時針轉 90 度。',
+        '拿著拼圖片時可以直接轉；沒拿著時，把滑鼠停在片上再按 R 或滾輪，或直接雙擊。拼圖池裡的滾輪是捲動，池裡的片請用 R 鍵或雙擊來轉。',
         '接好的整塊會一起轉。每轉一下算一次移動。全部接好後，會自動轉正。']],
       ['🛠️ 上方按鈕', [
         '整理拼圖池：把池裡的片排整齊。　邊角優先：把角落和邊緣的片排在前面，方便先拼外框。',
@@ -411,8 +411,8 @@
       ['🧩 难度（在上方“难度”菜单选，下一局才会换）', [
         '轻松：拼图片不会旋转，方向都是正的。',
         '进阶：每片一开始的方向是乱的，要先转到正确的方向，才能和旁边的片接合。',
-        '转的方法：按 R 键顺时针转 90 度，Shift＋R 逆时针转；或用鼠标滚轮转（往下滚＝顺时针）。',
-        '拿着拼图片时可以直接转；没拿着时，把鼠标停在片上再按 R 或滚轮。拼图池里的滚轮是滚动，池里的片请用 R 键转。',
+        '转的方法：按 R 键顺时针转 90 度，Shift＋R 逆时针转；或用鼠标滚轮转（往下滚＝顺时针）；鼠标在片上快点两下（双击）＝顺时针转 90 度。',
+        '拿着拼图片时可以直接转；没拿着时，把鼠标停在片上再按 R 或滚轮，或直接双击。拼图池里的滚轮是滚动，池里的片请用 R 键或双击来转。',
         '接好的整块会一起转。每转一下算一次移动。全部接好后，会自动转正。']],
       ['🛠️ 上方按钮', [
         '整理拼图池：把池里的片排整齐。　边角优先：把角落和边缘的片排在前面，方便先拼外框。',
@@ -438,8 +438,8 @@
       ['🧩 Level (pick it in the “Level” menu at the top; it changes on the next game)', [
         'Easy: pieces never rotate; they are always upright.',
         'Advanced: every piece starts turned a random way. Turn it the right way up before it can join its neighbours.',
-        'To turn: press R for 90° clockwise, Shift+R for counter-clockwise, or use the mouse wheel (scroll down = clockwise).',
-        'While holding a piece you can turn it right away; otherwise hover over it and press R or use the wheel. In the box the wheel scrolls, so use R there.',
+        'To turn: press R for 90° clockwise, Shift+R for counter-clockwise, or use the mouse wheel (scroll down = clockwise). Double-clicking a piece turns it 90° clockwise.',
+        'While holding a piece you can turn it right away; otherwise hover over it and press R, use the wheel, or double-click. In the box the wheel scrolls, so use R or double-click there.',
         'A joined block turns as one. Each turn counts as one move. When everything is joined it straightens itself.']],
       ['🛠️ Top buttons', [
         'Sort box: tidies the pieces in the box. Edges first: puts corners and edges first so you can build the frame.',
@@ -465,8 +465,8 @@
       ['🧩 Nivel (se elige en el menú «Nivel» de arriba; cambia en la próxima partida)', [
         'Fácil: las piezas no giran; siempre están derechas.',
         'Avanzado: cada pieza empieza girada al azar. Hay que ponerla en la posición correcta para que encaje con sus vecinas.',
-        'Para girar: pulsa R (90° a la derecha), Shift+R (a la izquierda) o usa la rueda del ratón (hacia abajo = derecha).',
-        'Con una pieza en la mano puedes girarla directamente; si no, pon el ratón encima y pulsa R o usa la rueda. En el banco la rueda desplaza, así que allí usa R.',
+        'Para girar: pulsa R (90° a la derecha), Shift+R (a la izquierda) o usa la rueda del ratón (hacia abajo = derecha). Con doble clic sobre una pieza la giras 90° a la derecha.',
+        'Con una pieza en la mano puedes girarla directamente; si no, pon el ratón encima y pulsa R, usa la rueda o haz doble clic. En el banco la rueda desplaza, así que allí usa R o doble clic.',
         'Un bloque unido gira entero. Cada giro cuenta como un movimiento. Al unir todo, se endereza solo.']],
       ['🛠️ Botones de arriba', [
         'Ordenar banco: acomoda las piezas del banco. Bordes primero: pone esquinas y bordes delante para armar el marco.',
@@ -1586,6 +1586,14 @@
     if (!p) return;
     rotateMembers(G.pieces.filter(q => q.g === p.g), dir, p);
   }
+  // 電腦版：滑鼠雙擊拼圖片＝順時針轉 90 度（手機本來就是點一下轉，所以只收滑鼠）
+  let lastPtrType = 'mouse';
+  cv.addEventListener('pointerdown', e => { lastPtrType = e.pointerType; }, true);
+  cv.addEventListener('dblclick', e => {
+    if (lastPtrType !== 'mouse' || !G || !G.rotOn || G.done || drag) return;
+    const [mx, my] = pos(e);
+    doRotate(1, mx, my);
+  });
   window.addEventListener('keydown', e => {
     if (!G || !G.rotOn || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key !== 'r' && e.key !== 'R') return;
