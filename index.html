@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>文字拼圖 · Jigsaw Puzzle</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -17,9 +17,11 @@
     color: #333;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100vh; height: 100dvh;
     overflow: hidden;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
   }
+  input { -webkit-user-select: text; user-select: text; }
   header {
     background: #1f2d3a; color: #fff; padding: 10px 18px 12px;
     display: flex; flex-direction: column; gap: 10px;
@@ -61,6 +63,73 @@
   #helpBody li { margin: 5px 0; }
   #helpOv .panel { width: min(640px, 94vw); }
   #rankTabs2 { margin-top: 8px; }
+
+  /* ---------- 手機版：上方只有標題與計時，功能鍵在下方 ---------- */
+  #mbar, #btnFit, #mdim, #mhint { display: none; }
+  body.m { --mbar: 60px; }
+  body.m.land { --mbar: 46px; }
+  body.m header { padding: 6px 12px; gap: 0; z-index: 50; box-shadow: none; }
+  body.m header h1 { font-size: 1.3rem; letter-spacing: 1px; }
+  body.m header h1 small { font-size: .5em; letter-spacing: .5px; margin-top: 0; }
+  body.m.land header h1 small { display: none; }
+  body.m .hrow { flex-wrap: nowrap; }
+  body.m .tools {
+    position: fixed; left: 0; right: 0; bottom: var(--mbar); z-index: 40;
+    background: #1f2d3a; border-radius: 18px 18px 0 0; padding: 16px 14px 18px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    visibility: hidden; box-shadow: 0 -6px 24px rgba(0,0,0,.5);
+    max-height: calc(100dvh - var(--mbar) - 10px); overflow: auto;
+  }
+  body.m.showMore .tools { visibility: visible; }
+  body.m .tools { align-items: stretch; grid-auto-rows: 1fr; }
+  body.m .tools .sep, body.m .tools #btnTidy, body.m .tools #btnPreview { display: none; }
+  body.m .tools button { padding: 12px 4px; font-size: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.1; }
+  body.m .tools button span { font-size: .72rem; font-weight: 700; }
+  body.m .tools button small { font-size: .85em; }
+  body.m .tools #btnMusic::after, body.m .tools #btnSound::after { content: attr(data-lbl); font-size: .72rem; font-weight: 700; }
+  body.m .tools .stat {
+    position: fixed; top: 6px; z-index: 60; visibility: visible; min-width: 64px; color: #fff; pointer-events: none;
+  }
+  body.m .tools .stat b { font-size: 1.05rem; }
+  body.m .tools .stat:last-child { right: 8px; }
+  body.m .tools .stat:nth-last-child(2) { right: 76px; }
+  body.m header .setup { display: none; }
+  body.m.showNew header .setup {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end;
+    position: fixed; left: 0; right: 0; bottom: var(--mbar); z-index: 40;
+    border-radius: 18px 18px 0 0; border: none; border-top: 3px solid #f0a030; padding: 14px 16px 16px;
+    max-height: calc(100dvh - var(--mbar) - 10px); overflow: auto; box-shadow: 0 -6px 24px rgba(0,0,0,.5);
+  }
+  body.m header .setup .bigfield { grid-column: 1 / 3; flex: none; min-width: 0; }
+  body.m header .setup .sizefield select { width: 100%; }
+  body.m header .setup #btnStart { grid-column: 1 / 3; width: 100%; }
+  body.m #inText { height: 52px; }
+  body.m #mdim { position: fixed; left: 0; right: 0; top: 0; bottom: var(--mbar); z-index: 39; background: rgba(0,0,0,.5); }
+  body.m.showNew #mdim, body.m.showMore #mdim { display: block; }
+  body.m #mbar {
+    display: flex; height: calc(var(--mbar) + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #1f2d3a; z-index: 50; justify-content: space-around; align-items: center; border-top: 1px solid #34495e;
+  }
+  body.m #mbar button { background: none; border: none; color: #fff; padding: 3px 6px; display: flex; flex-direction: column; align-items: center; line-height: 1.05; font-size: .7rem; min-width: 56px; }
+  body.m #mbar button i { font-style: normal; font-size: 1.25rem; }
+  body.m #mbar button span { font-size: .72rem; }
+  body.m #mbar button small { font-size: .78em; opacity: .75; }
+  body.m #mbar button.pri { background: #2e86de; border-radius: 10px; }
+  body.m.land #mbar button i { font-size: 1.05rem; }
+  body.m.land #mbar button small { display: none; }
+  body.m.land #mbar button { flex-direction: row; gap: 6px; }
+  body.m.land #status { left: auto; right: 10px; top: auto; bottom: 8px; }
+  body.m.land #mhint { left: 62%; max-width: 60%; }
+  body.m.land #mPool { display: none; }
+  body.m #btnFit { display: block; position: absolute; right: 10px; top: 10px; z-index: 5; padding: 6px 12px; border-radius: 18px; background: rgba(0,0,0,.6); border: none; font-size: .8rem; }
+  body.m #status { left: 8px; top: 8px; right: auto; bottom: auto; padding: 4px 10px; font-size: .72rem; }
+  body.m #status small { display: none; }
+  body.m #mhint { position: absolute; left: 50%; top: 44px; transform: translateX(-50%); z-index: 6; background: rgba(240,160,48,.96); color: #222;
+    font-weight: 700; font-size: .8rem; padding: 7px 12px; border-radius: 10px; max-width: 92%; text-align: center; pointer-events: none; transition: opacity .6s; }
+  body.m #mhint.show { display: block; }
+  body.m #mhint.fade { opacity: 0; }
+  body.m #win .card { padding: 20px 16px; width: 92%; }
+  body.m #saveBox input { width: min(210px, 48vw); }
   #btnStart { height: 48px; font-size: 1.25rem; padding: 0 28px; }
   #btnStart small { font-size: .55em; }
 
@@ -124,6 +193,7 @@
 <body>
 
 <header>
+  <div id="mdim"></div>
   <div class="hrow">
     <h1 data-i="title"></h1>
     <div class="tools">
@@ -159,6 +229,8 @@
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="status"></div>
+  <button id="btnFit" data-i="fit"></button>
+  <div id="mhint"></div>
   <div id="settingsOv" class="ov hidden">
     <div class="panel">
       <h3>⚙️ <span data-i="settings"></span></h3>
@@ -202,6 +274,14 @@
     </div>
   </div>
 </div>
+
+<nav id="mbar">
+  <button id="mNew" class="pri"><i>🆕</i><span data-i="mNew"></span></button>
+  <button id="mPool"><i>🧺</i><span data-i="mPool"></span></button>
+  <button id="mPrev"><i>🖼️</i><span data-i="preview"></span></button>
+  <button id="mTidy"><i>🧹</i><span data-i="mTidy"></span></button>
+  <button id="mMore"><i>⋯</i><span data-i="mMore"></span></button>
+</nav>
 
 <script>
 (function () {
@@ -280,6 +360,13 @@
     'es':    { level:'Nivel', lvEasy:'Fácil', lvRot:'Avanzado', help:'Ayuda', helpTitle:'Cómo jugar', poolHintRot:'R / rueda: girar · arrastra' }
   };
   Object.keys(I18N_LV).forEach(k => Object.assign(I18N[k], I18N_LV[k]));
+  const I18N_M = {
+    'zh-TW': { mNew:'新遊戲', mPool:'拼圖池', mTidy:'整理', mMore:'更多', musicS:'背景音樂', sfxS:'接合音效', fit:'🔍 回到全貌', mHint:'單指拖空白處＝移動畫面　兩指＝縮放', mHintRot:'　點拼圖片＝轉 90°' },
+    'zh-CN': { mNew:'新游戏', mPool:'拼图池', mTidy:'整理', mMore:'更多', musicS:'背景音乐', sfxS:'接合音效', fit:'🔍 回到全貌', mHint:'单指拖空白处＝移动画面　两指＝缩放', mHintRot:'　点拼图片＝转 90°' },
+    'en':    { mNew:'New', mPool:'Box', mTidy:'Sort', mMore:'More', musicS:'Music', sfxS:'Sounds', fit:'See all', mHint:'One finger on the table = move view · two fingers = zoom', mHintRot:' · tap a piece = rotate 90°' },
+    'es':    { mNew:'Nueva', mPool:'Banco', mTidy:'Ordenar', mMore:'Más', musicS:'Música', sfxS:'Sonidos', fit:'Ver todo', mHint:'Un dedo en la mesa = mover · dos dedos = zoom', mHintRot:' · toca una pieza = girar 90°' }
+  };
+  Object.keys(I18N_M).forEach(k => Object.assign(I18N[k], I18N_M[k]));
   // 遊戲說明（每個語言一份：標題＋條列）
   const HELP = {
     'zh-TW': [
@@ -289,6 +376,11 @@
         '兩片正確相鄰、靠近時，會「喀」一聲自動吸住；接好的整塊可以一起拖曳。',
         '桌面可以同時拼好幾個不同的區塊，最後再接起來。',
         '左邊的拼圖池：滾輪或拖曳空白處可以上下捲動；片子也可以拖來拖去自己整理。']],
+      ['📱 手機操作', [
+        '拼圖池在畫面下方（左右滑動，點標題可收合）；手機橫放時，拼圖池在左邊。',
+        '單指拖空白處＝移動畫面，兩指＝放大縮小；右上角「回到全貌」可以回到整張桌面。',
+        '進階難度：點一下拼圖片＝轉 90 度；手上拖著片子時，用另一隻手指點一下螢幕也可以轉。',
+        '輸入文字、數量、難度在下方「新遊戲」；其他功能在「更多」。']],
       ['🧩 難度（在上方「難度」選單選，下一局才會換）', [
         '輕鬆：拼圖片不會旋轉，方向都是正的。',
         '進階：每片一開始的方向是亂的，要先轉到正確的方向，才能和旁邊的片接合。',
@@ -311,6 +403,11 @@
         '两片正确相邻、靠近时，会“咔”一声自动吸住；接好的整块可以一起拖曳。',
         '桌面可以同时拼好几个不同的区块，最后再接起来。',
         '左边的拼图池：滚轮或拖曳空白处可以上下滚动；片子也可以拖来拖去自己整理。']],
+      ['📱 手机操作', [
+        '拼图池在画面下方（左右滑动，点标题可收合）；手机横放时，拼图池在左边。',
+        '单指拖空白处＝移动画面，两指＝放大缩小；右上角“回到全貌”可以回到整张桌面。',
+        '进阶难度：点一下拼图片＝转 90 度；手上拖着片子时，用另一只手指点一下屏幕也可以转。',
+        '输入文字、数量、难度在下方“新游戏”；其他功能在“更多”。']],
       ['🧩 难度（在上方“难度”菜单选，下一局才会换）', [
         '轻松：拼图片不会旋转，方向都是正的。',
         '进阶：每片一开始的方向是乱的，要先转到正确的方向，才能和旁边的片接合。',
@@ -333,6 +430,11 @@
         'When two pieces that belong together are close, they snap with a click. A joined block moves as one.',
         'You can build several separate areas on the table and join them at the end.',
         'The box on the left: scroll with the wheel or drag the empty space. You can also drag pieces around to sort them.']],
+      ['📱 On a phone', [
+        'The box is at the bottom of the screen (swipe left/right; tap its title to fold it). With the phone sideways it is on the left.',
+        'One finger on the empty table = move the view, two fingers = zoom. “See all” at the top right brings the whole table back.',
+        'Advanced level: tap a piece to rotate it 90°. While dragging a piece, tapping the screen with another finger also rotates it.',
+        'Text, size and level are under “New” at the bottom; everything else is under “More”.']],
       ['🧩 Level (pick it in the “Level” menu at the top; it changes on the next game)', [
         'Easy: pieces never rotate; they are always upright.',
         'Advanced: every piece starts turned a random way. Turn it the right way up before it can join its neighbours.',
@@ -355,6 +457,11 @@
         'Cuando dos piezas que van juntas están cerca, encajan con un clic. Un bloque unido se mueve entero.',
         'Puedes armar varias zonas separadas en la mesa y unirlas al final.',
         'El banco de la izquierda: desplázalo con la rueda o arrastrando el fondo. También puedes arrastrar las piezas para ordenarlas.']],
+      ['📱 En el móvil', [
+        'El banco está abajo (desliza a izquierda/derecha; toca su título para plegarlo). Con el móvil horizontal está a la izquierda.',
+        'Un dedo en la mesa vacía = mover la vista; dos dedos = zoom. «Ver todo» (arriba a la derecha) vuelve a mostrar toda la mesa.',
+        'Nivel avanzado: toca una pieza para girarla 90°. Mientras arrastras una pieza, tocar la pantalla con otro dedo también la gira.',
+        'Texto, tamaño y nivel están en «Nueva» (abajo); lo demás está en «Más».']],
       ['🧩 Nivel (se elige en el menú «Nivel» de arriba; cambia en la próxima partida)', [
         'Fácil: las piezas no giran; siempre están derechas.',
         'Avanzado: cada pieza empieza girada al azar. Hay que ponerla en la posición correcta para que encaje con sus vecinas.',
@@ -376,6 +483,7 @@
 
   /* ---------- 基本物件 ---------- */
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let RES = DPR;            // 拼圖圖片的解析度（手機版要放大看，所以畫得細一點）
   const stage = document.getElementById('stage');
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
@@ -619,16 +727,35 @@
   })();
   let noisePattern = null;
 
-  /* ---------- 畫面尺寸 ---------- */
+  /* ---------- 畫面尺寸、電腦版／手機版 ---------- */
+  let isMobile = false, isLand = false;
+  function detectMobile() {
+    const q = new URLSearchParams(location.search).get('m');
+    if (q === '1') return true;
+    if (q === '0') return false;
+    return innerWidth <= 700 || (matchMedia('(pointer: coarse)').matches && innerHeight <= 500);
+  }
+  function applyMode() {
+    const m = detectMobile();
+    const changed = m !== isMobile;
+    isMobile = m;
+    isLand = m && innerWidth > innerHeight;
+    document.body.classList.toggle('m', m);
+    document.body.classList.toggle('land', isLand);
+    if (!m) document.body.classList.remove('showNew', 'showMore');
+    return changed;
+  }
   function resize() {
+    applyMode();
     const r = stage.getBoundingClientRect();
-    W = Math.max(400, Math.floor(r.width));
-    H = Math.max(300, Math.floor(r.height));
+    W = Math.max(isMobile ? 240 : 400, Math.floor(r.width));
+    H = Math.max(isMobile ? 240 : 300, Math.floor(r.height));
     cv.width = Math.round(W * DPR);
     cv.height = Math.round(H * DPR);
     cv.style.width = W + 'px';
     cv.style.height = H + 'px';
     noisePattern = ctx.createPattern(noise, 'repeat');
+    if (G) onResizeGame();
     requestDraw();
   }
 
@@ -683,9 +810,9 @@
 
   function makeImage(chars, S, ann) {
     const c = document.createElement('canvas');
-    c.width = c.height = Math.round(S * DPR);
+    c.width = c.height = Math.round(S * RES);
     const x = c.getContext('2d');
-    x.scale(DPR, DPR);
+    x.scale(RES, RES);
     const hue = Math.random() * 360;
 
     const g = x.createLinearGradient(0, 0, S, S);
@@ -780,10 +907,11 @@
     const poolW = Math.round(clamp(W * .27, 250, 400));
     const tableW = W - poolW;
     const S0 = Math.min(H * .86, tableW * .84, 700);
-    const P = Math.max(24, Math.floor(S0 / n));
+    const P = isMobile ? 46 : Math.max(24, Math.floor(S0 / n));
     const S = P * n;
     const m = Math.ceil(P * .3) + 3;
     const sw = P + 2 * m;
+    RES = isMobile ? clamp(DPR * 1.5, 2, 3) : DPR;
     let ann = null;
     if (settings.phon !== 'off' && window.pinyinPro) {
       try {
@@ -815,9 +943,9 @@
 
         // 預先畫好每一片的外觀
         const sc = document.createElement('canvas');
-        sc.width = sc.height = Math.ceil(sw * DPR);
+        sc.width = sc.height = Math.ceil(sw * RES);
         const sx = sc.getContext('2d');
-        sx.scale(DPR, DPR);
+        sx.scale(RES, RES);
         sx.translate(m, m);
         sx.save();
         sx.clip(path);
@@ -847,20 +975,16 @@
     G = {
       cols, rows, N, n, P, S, m, sw, poolW, img, pieces, text: chars.join(''), moves: 0, level, rotOn,
       order: pieces.map(p => p.id).sort(() => Math.random() - .5),
-      scroll: 0, start: performance.now(), done: false, elapsed: 0
+      scroll: 0, start: performance.now(), done: false, elapsed: 0,
+      view: { x: 0, y: 0, s: 1 }, fx: 0, fy: 0, trayOpen: true, trayFull: Math.ceil(24 + 2 * P * 1.2 + 2 * m), trayH: 0, trayTop: 0,
+      mobile: false, bottom: false
     };
+    calcLayout();
+    if (isMobile) { G.fx = G.fy = 0; fitView(); }
+    else { G.fx = G.poolW + (W - G.poolW - S) / 2; G.fy = (H - S) / 2; }
 
     // 初始散落在拼圖池
-    const cell = P * 1.2;
-    const usable = poolW - 16 - 2 * m;
-    const cp = Math.max(1, Math.floor((usable - P) / cell) + 1);
-    const totalW = (cp - 1) * cell + P;
-    const x0 = 8 + m + (usable - totalW) / 2;
-    G.order.forEach((id, i) => {
-      const p = pieces[id];
-      p.x = x0 + (i % cp) * cell + (Math.random() - .5) * P * .12;
-      p.y = 50 + m + Math.floor(i / cp) * cell + (Math.random() - .5) * P * .12;
-    });
+    layoutPool();
 
     drag = null;
     lastResult = null;
@@ -868,6 +992,7 @@
     showMoves();
     startTimer();
     updateStatus();
+    showHint();
     requestDraw();
   }
 
@@ -922,12 +1047,118 @@
     ctx.restore();
   }
 
+  // 拼圖池座標 ⇄ 螢幕座標（電腦版／手機橫放：池在左邊、上下捲動；手機直放：池是下方托盤、左右捲動）
+  function poolToScreen(px, py) { return G.bottom ? [px - G.scroll, G.trayTop + py] : [px, py - G.scroll]; }
+  function screenToPool(sx, sy) { return G.bottom ? [sx + G.scroll, sy - G.trayTop] : [sx, sy + G.scroll]; }
+  function ta() { return G.bottom ? { x0: 0, y0: 0, x1: W, y1: G.trayTop } : { x0: G.poolW, y0: 0, x1: W, y1: H }; }
+  function inTA(mx, my) { const t = ta(); return mx >= t.x0 && mx < t.x1 && my >= t.y0 && my < t.y1; }
+  function overPool(mx, my) { return G.bottom ? (G.trayOpen && my >= G.trayTop) : mx < G.poolW; }
+  function inPoolBody(mx, my) { return G.bottom ? (G.trayOpen && my >= G.trayTop + 24) : (mx < G.poolW - 8 && my >= 44); }
+
   function maxScroll() {
     let b = 0;
+    if (G.bottom) {
+      for (const p of G.pieces) if (p.pool) b = Math.max(b, p.x + G.P + G.m);
+      return Math.max(0, b + 12 - W);
+    }
     for (const p of G.pieces) if (p.pool) b = Math.max(b, p.y + G.P + G.m);
     return Math.max(0, b + 16 - H);
   }
   function clampScroll() { G.scroll = clamp(G.scroll, 0, maxScroll()); }
+
+  function calcLayout() {
+    G.mobile = isMobile;
+    G.bottom = isMobile && H > W;
+    if (G.bottom) {
+      G.trayH = G.trayOpen ? G.trayFull : 26;
+      G.trayTop = H - G.trayH;
+      G.poolW = 0;
+    } else {
+      G.poolW = isMobile ? Math.round(clamp(W * .26, 160, 240)) : Math.round(clamp(W * .27, 250, 400));
+      G.trayH = 0; G.trayTop = H;
+    }
+  }
+  function worldBounds() {
+    const S = G.S;
+    let x0 = G.fx - S, y0 = G.fy - S, x1 = G.fx + 2 * S, y1 = G.fy + 2 * S;
+    for (const p of G.pieces) if (!p.pool) {
+      x0 = Math.min(x0, p.x - G.P); y0 = Math.min(y0, p.y - G.P);
+      x1 = Math.max(x1, p.x + 2 * G.P); y1 = Math.max(y1, p.y + 2 * G.P);
+    }
+    return { x0, y0, x1, y1 };
+  }
+  function clampView() {
+    if (!G || !G.mobile) return;
+    const t = ta(), B = worldBounds(), v = G.view, s = v.s;
+    const minX = t.x1 - B.x1 * s, maxX = t.x0 - B.x0 * s;
+    const minY = t.y1 - B.y1 * s, maxY = t.y0 - B.y0 * s;
+    v.x = minX > maxX ? (minX + maxX) / 2 : clamp(v.x, minX, maxX);
+    v.y = minY > maxY ? (minY + maxY) / 2 : clamp(v.y, minY, maxY);
+  }
+  function fitView() {
+    const t = ta(), S = G.S, v = G.view;
+    v.s = clamp(Math.min(t.x1 - t.x0, t.y1 - t.y0) * .94 / S, .25, 1.4);
+    v.x = t.x0 + ((t.x1 - t.x0) - S * v.s) / 2 - G.fx * v.s;
+    v.y = t.y0 + ((t.y1 - t.y0) - S * v.s) / 2 - G.fy * v.s;
+  }
+  // 初始把所有片散落在拼圖池
+  function layoutPool() {
+    const { P, m, pieces } = G, cell = P * 1.2;
+    if (G.bottom) {
+      G.order.forEach((id, i) => {
+        const p = pieces[id];
+        p.x = 12 + m + Math.floor(i / 2) * cell + (Math.random() - .5) * P * .1;
+        p.y = 24 + m + 4 + (i % 2) * cell + (Math.random() - .5) * P * .08;
+      });
+      return;
+    }
+    const usable = G.poolW - 16 - 2 * m;
+    const cp = Math.max(1, Math.floor((usable - P) / cell) + 1);
+    const totalW = (cp - 1) * cell + P;
+    const x0 = 8 + m + (usable - totalW) / 2;
+    G.order.forEach((id, i) => {
+      const p = pieces[id];
+      p.x = x0 + (i % cp) * cell + (Math.random() - .5) * P * .12;
+      p.y = 50 + m + Math.floor(i / cp) * cell + (Math.random() - .5) * P * .12;
+    });
+  }
+  // 視窗大小或方向改變（手機直放／橫放）
+  function onResizeGame() {
+    if (!G.mobile && !isMobile) return;           // 電腦版維持原樣
+    const oldKey = G.mobile + '/' + G.bottom, ofx = G.fx, ofy = G.fy;
+    calcLayout();
+    if (oldKey !== G.mobile + '/' + G.bottom) {
+      tidy('plain');
+      if (G.mobile) {
+        G.fx = G.fy = 0;
+        for (const p of G.pieces) if (!p.pool) { p.x -= ofx; p.y -= ofy; }
+        fitView();
+      } else {
+        G.view = { x: 0, y: 0, s: 1 };
+        G.fx = G.poolW + (W - G.poolW - G.S) / 2; G.fy = (H - G.S) / 2;
+        for (const p of G.pieces) if (!p.pool) { p.x += G.fx - ofx; p.y += G.fy - ofy; }
+      }
+    }
+    clampView(); clampScroll();
+  }
+  function toggleTray() {
+    if (!G || !G.bottom) return;
+    G.trayOpen = !G.trayOpen;
+    calcLayout(); clampView(); requestDraw();
+  }
+  let hintTimer = 0;
+  function showHint() {
+    const el = $('mhint');
+    clearTimeout(hintTimer);
+    if (!isMobile || !G) { el.classList.remove('show', 'fade'); return; }
+    const [z, o] = bi('mHint'), [z2, o2] = bi('mHintRot');
+    el.innerHTML = '';
+    const l1 = document.createElement('div'); l1.textContent = z + (G.rotOn ? z2 : '');
+    el.appendChild(l1);
+    if (o) { const l2 = document.createElement('small'); l2.style.fontWeight = '400'; l2.textContent = o + (G.rotOn ? o2 : ''); el.appendChild(l2); }
+    el.classList.remove('fade'); el.classList.add('show');
+    hintTimer = setTimeout(() => { el.classList.add('fade'); hintTimer = setTimeout(() => el.classList.remove('show'), 700); }, 6000);
+  }
 
   function draw() {
     raf = 0;
@@ -943,110 +1174,191 @@
 
     const now = performance.now();
     let anim = false;
-    const pw = G.poolW;
+    const pw = G.poolW, v = G.view;
+    const dragging = drag && drag.mode === 'piece' ? drag.set : null;
 
     // 提示框
     if (showFrame) {
-      const fx = pw + (W - pw - G.S) / 2, fy = (H - G.S) / 2;
       ctx.save();
+      ctx.translate(v.x, v.y); ctx.scale(v.s, v.s);
       ctx.setLineDash([10, 7]);
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(255,255,255,.55)';
-      ctx.strokeRect(fx, fy, G.S, G.S);
+      ctx.strokeRect(G.fx, G.fy, G.S, G.S);
       ctx.restore();
     }
 
-    // 拼圖池（紙盒蓋）
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,.5)';
-    ctx.shadowBlur = 14; ctx.shadowOffsetX = 3;
-    ctx.fillStyle = '#7a5c3a';
-    ctx.fillRect(0, 0, pw, H);
-    ctx.restore();
-    ctx.fillStyle = '#b8905f';
-    ctx.fillRect(8, 8, pw - 16, H - 16);
-    ctx.strokeStyle = 'rgba(0,0,0,.25)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(8, 8, pw - 16, H - 16);
-
-    // 池中的拼圖（可捲動、裁切在盒內）
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(8, 44, pw - 16, H - 52);
-    ctx.clip();
-    for (const id of G.order) {
-      const p = G.pieces[id];
-      if (!p.pool) continue;
-      ctx.shadowColor = 'rgba(0,0,0,.35)';
-      ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
-      drawPiece(p, p.x, p.y - G.scroll);
-    }
-    ctx.restore();
-
-    // 池標題列
-    ctx.fillStyle = '#5d4529';
-    ctx.fillRect(8, 8, pw - 16, 36);
-    let pc = 0;
-    for (const p of G.pieces) if (p.pool) pc++;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    // 文字太長就縮小字級，直到放得進盒子寬度
-    const fit = (txt, px, weight, minPx) => {
-      let s = px;
-      for (; s > minPx; s -= .5) {
-        ctx.font = `${weight} ${s}px ${FONT}`;
-        if (ctx.measureText(txt).width <= pw - 32) break;
+    // 文字太長就縮小字級，直到放得進寬度
+    const fit = (txt, px, weight, minPx, maxW) => {
+      let sz = px;
+      for (; sz > minPx; sz -= .5) {
+        ctx.font = `${weight} ${sz}px ${FONT}`;
+        if (ctx.measureText(txt).width <= maxW) break;
       }
-      ctx.font = `${weight} ${s}px ${FONT}`;
+      ctx.font = `${weight} ${sz}px ${FONT}`;
     };
-    const poolTitle = `${T('pool')} (${pc})`;
-    fit(poolTitle, 14, 'bold', 9);
-    ctx.fillText(poolTitle, 16, 20);
-    ctx.fillStyle = 'rgba(255,255,255,.7)';
-    const hint = T(G.rotOn ? 'poolHintRot' : 'poolHint');
-    fit(hint, 10.5, 'normal', 8);
-    ctx.fillText(hint, 16, 35);
 
-    // 捲軸
-    const ms = maxScroll();
-    if (ms > 0) {
-      const trackH = H - 60;
-      const thumb = Math.max(30, trackH * H / (H + ms));
-      const ty = 48 + (trackH - thumb) * (G.scroll / ms);
-      ctx.fillStyle = 'rgba(0,0,0,.35)';
-      roundRect(ctx, pw - 13, ty, 5, thumb, 2.5);
-      ctx.fill();
-    }
+    const drawPool = () => {
+      let pc = 0;
+      for (const p of G.pieces) if (p.pool) pc++;
+      if (G.bottom) {
+        // 手機直放：下方托盤
+        const ty = G.trayTop, open = G.trayOpen, hh = open ? 24 : 26;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.5)';
+        ctx.shadowBlur = 12; ctx.shadowOffsetY = -3;
+        ctx.fillStyle = '#7a5c3a';
+        ctx.fillRect(0, ty, W, G.trayH);
+        ctx.restore();
+        if (open) {
+          ctx.fillStyle = '#b8905f';
+          ctx.fillRect(0, ty + 24, W, G.trayH - 24);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, ty + 24, W, G.trayH - 24);
+          ctx.clip();
+          for (const id of G.order) {
+            const p = G.pieces[id];
+            if (!p.pool) continue;
+            ctx.shadowColor = 'rgba(0,0,0,.35)';
+            ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+            drawPiece(p, p.x - G.scroll, ty + p.y);
+          }
+          ctx.restore();
+          const ms = maxScroll();
+          if (ms > 0) {
+            const trackW = W - 24;
+            const thumb = Math.max(30, trackW * W / (W + ms));
+            const tx = 12 + (trackW - thumb) * (G.scroll / ms);
+            ctx.fillStyle = 'rgba(0,0,0,.35)';
+            roundRect(ctx, tx, ty + G.trayH - 7, thumb, 4, 2);
+            ctx.fill();
+          }
+        }
+        ctx.fillStyle = '#5d4529';
+        ctx.fillRect(0, ty, W, hh);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const title = `${T('pool')} (${pc})`;
+        fit(title, 12, 'bold', 8, W - 60);
+        ctx.fillText(title, 10, ty + hh / 2 + 1);
+        ctx.font = `bold 13px ${FONT}`;
+        ctx.textAlign = 'right';
+        ctx.fillText(open ? '▼' : '▲', W - 12, ty + hh / 2 + 1);
+        ctx.textAlign = 'left';
+        return;
+      }
+      // 左邊的拼圖池（紙盒蓋）
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.5)';
+      ctx.shadowBlur = 14; ctx.shadowOffsetX = 3;
+      ctx.fillStyle = '#7a5c3a';
+      ctx.fillRect(0, 0, pw, H);
+      ctx.restore();
+      ctx.fillStyle = '#b8905f';
+      ctx.fillRect(8, 8, pw - 16, H - 16);
+      ctx.strokeStyle = 'rgba(0,0,0,.25)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(8, 8, pw - 16, H - 16);
 
-    // 桌上的拼圖
-    for (const id of G.order) {
-      const p = G.pieces[id];
-      if (p.pool) continue;
-      const dragging = drag && drag.set && drag.set.has(id);
-      if (dragging) {
-        ctx.shadowColor = 'rgba(0,0,0,.45)';
-        ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 8;
-        ctx.shadowBlur = drag.members.length <= 80 ? 10 : 0;
-      } else if (p.flash > now) {
-        const a = (p.flash - now) / 600;
-        ctx.shadowColor = `rgba(255,240,120,${a})`;
-        ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 16 * a;
-        anim = true;
-      } else {
+      // 池中的拼圖（可捲動、裁切在盒內）
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(8, 44, pw - 16, H - 52);
+      ctx.clip();
+      for (const id of G.order) {
+        const p = G.pieces[id];
+        if (!p.pool) continue;
         ctx.shadowColor = 'rgba(0,0,0,.35)';
         ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+        drawPiece(p, p.x, p.y - G.scroll);
       }
-      drawPiece(p, p.x, p.y);
+      ctx.restore();
+
+      // 池標題列
+      ctx.fillStyle = '#5d4529';
+      ctx.fillRect(8, 8, pw - 16, 36);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const poolTitle = `${T('pool')} (${pc})`;
+      fit(poolTitle, 14, 'bold', 9, pw - 32);
+      ctx.fillText(poolTitle, 16, 20);
+      ctx.fillStyle = 'rgba(255,255,255,.7)';
+      const hint = T(G.rotOn ? 'poolHintRot' : 'poolHint');
+      fit(hint, 10.5, 'normal', 8, pw - 32);
+      ctx.fillText(hint, 16, 35);
+
+      // 捲軸
+      const ms = maxScroll();
+      if (ms > 0) {
+        const trackH = H - 60;
+        const thumb = Math.max(30, trackH * H / (H + ms));
+        const ty = 48 + (trackH - thumb) * (G.scroll / ms);
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        roundRect(ctx, pw - 13, ty, 5, thumb, 2.5);
+        ctx.fill();
+      }
+    };
+
+    // 桌上的拼圖（mode：'all' 全部、'still' 沒被拿著的、'drag' 拿在手上的）
+    const drawTable = (mode) => {
+      ctx.save();
+      ctx.translate(v.x, v.y); ctx.scale(v.s, v.s);
+      for (const id of G.order) {
+        const p = G.pieces[id];
+        if (p.pool) continue;
+        const isDrag = !!(dragging && dragging.has(id));
+        if (mode === 'still' && isDrag) continue;
+        if (mode === 'drag' && !isDrag) continue;
+        if (isDrag) {
+          ctx.shadowColor = 'rgba(0,0,0,.45)';
+          ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 8;
+          ctx.shadowBlur = drag.members.length <= 80 ? 10 : 0;
+        } else if (p.flash > now) {
+          const a = (p.flash - now) / 600;
+          ctx.shadowColor = `rgba(255,240,120,${a})`;
+          ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+          ctx.shadowBlur = 16 * a;
+          anim = true;
+        } else {
+          ctx.shadowColor = 'rgba(0,0,0,.35)';
+          ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+        }
+        drawPiece(p, p.x, p.y);
+      }
+      ctx.restore();
+    };
+
+    if (G.mobile) {
+      // 手機：桌上的片先畫（裁在桌面範圍內），再畫拼圖池，拿在手上的最後畫
+      const t = ta();
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(t.x0, t.y0, t.x1 - t.x0, t.y1 - t.y0);
+      ctx.clip();
+      drawTable('still');
+      ctx.restore();
+      drawPool();
+      drawTable('drag');
+    } else {
+      drawPool();
+      drawTable('all');
     }
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
 
     // 完成圖
     if (showPreview) {
-      const size = clamp((W - pw) * .2, 120, 210);
-      const px = W - size - 20, py = 20;
+      let size, px, py;
+      if (G.mobile) {
+        const t = ta();
+        size = Math.min(t.x1 - t.x0, t.y1 - t.y0) * .8;
+        px = t.x0 + ((t.x1 - t.x0) - size) / 2; py = t.y0 + ((t.y1 - t.y0) - size) / 2;
+      } else {
+        size = clamp((W - pw) * .2, 120, 210);
+        px = W - size - 20; py = 20;
+      }
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.5)';
       ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
@@ -1060,6 +1372,8 @@
   }
 
   /* ---------- 點選判斷 ---------- */
+  const ptrs = new Map();
+  const hover = { x: 0, y: 0, on: false };
   function pos(e) {
     const r = cv.getBoundingClientRect();
     return [e.clientX - r.left, e.clientY - r.top];
@@ -1068,15 +1382,23 @@
   function hit(mx, my) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.lineWidth = 6;
+    const v = G.view, hh = G.P / 2, fat = G.mobile ? 12 : 6;
+    const poolOk = inPoolBody(mx, my), tableOk = !G.mobile || inTA(mx, my);
     let found = null;
     for (let i = G.order.length - 1; i >= 0; i--) {
       const p = G.pieces[G.order[i]];
-      if (p.pool && (mx >= G.poolW - 8 || my < 44)) continue;
-      const hh = G.P / 2;
-      let dx = mx - (p.x + hh), dy = my - ((p.pool ? p.y - G.scroll : p.y) + hh);
+      let sx, sy, sc;
+      if (p.pool) {
+        if (!poolOk) continue;
+        [sx, sy] = poolToScreen(p.x, p.y); sc = 1;
+      } else {
+        if (!tableOk) continue;
+        sx = p.x * v.s + v.x; sy = p.y * v.s + v.y; sc = v.s;
+      }
+      let dx = (mx - (sx + hh * sc)) / sc, dy = (my - (sy + hh * sc)) / sc;
       for (let k = p.rot | 0; k > 0; k--) { const t = dx; dx = dy; dy = -t; }   // 轉回正的方向再判斷
       const lx = dx + hh, ly = dy + hh;
+      ctx.lineWidth = fat / sc;
       if (ctx.isPointInPath(p.path, lx, ly) || ctx.isPointInStroke(p.path, lx, ly)) { found = p; break; }
     }
     ctx.restore();
@@ -1084,64 +1406,139 @@
   }
 
   /* ---------- 拖曳 ---------- */
-  const hover = { x: 0, y: 0, on: false };
+  function startPinch() {
+    const pts = [...ptrs.entries()];
+    const a = pts[0][1], b = pts[1][1];
+    drag = { mode: 'pinch', ids: [pts[0][0], pts[1][0]], d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1,
+      s0: G.view.s, cx0: (a[0] + b[0]) / 2, cy0: (a[1] + b[1]) / 2, vx0: G.view.x, vy0: G.view.y };
+  }
+
   cv.addEventListener('pointerdown', e => {
     if (!G || e.button > 0) return;
     const [mx, my] = pos(e);
+    ptrs.set(e.pointerId, [mx, my]);
+    const touch = e.pointerType !== 'mouse';
+    if (ptrs.size === 2 && touch) {
+      if (drag && drag.mode === 'piece') { if (G.rotOn && !G.done) rotateMembers(drag.members, 1, drag.anchor); return; }   // 手上拖著片子，另一指點一下＝轉
+      if (drag && drag.mode === 'scroll') return;
+      if (G.mobile) { startPinch(); cv.setPointerCapture(e.pointerId); }
+      return;
+    }
+    if (ptrs.size > 2) return;
+    if (G.bottom && my >= G.trayTop && my < G.trayTop + (G.trayOpen ? 24 : 26)) { toggleTray(); return; }
     const p = hit(mx, my);
     if (p) {
       const members = G.pieces.filter(q => q.g === p.g);
       const set = new Set(members.map(q => q.id));
       // 拿起來，放到最上層
       G.order = G.order.filter(id => !set.has(id)).concat(members.map(q => q.id));
+      let origin = null;
       if (p.pool) {
-        for (const q of members) { q.y -= G.scroll; q.pool = false; }
+        // 從拼圖池拿起：換成桌面座標（片子的左上角保持在手指／滑鼠相對的位置）
+        origin = { pts: members.map(q => [q.x, q.y]) };
+        const [sx, sy] = poolToScreen(p.x, p.y);
+        const wx = (mx - G.view.x) / G.view.s - (mx - sx), wy = (my - G.view.y) / G.view.s - (my - sy);
+        const shx = wx - p.x, shy = wy - p.y;
+        for (const q of members) { q.x += shx; q.y += shy; q.pool = false; }
       }
-      drag = { mode: 'piece', members, set, anchor: p, lx: clamp(mx, 0, W), ly: clamp(my, 0, H), dist: 0 };
+      drag = { mode: 'piece', pid: e.pointerId, members, set, anchor: p, origin, touch, lx: clamp(mx, 0, W), ly: clamp(my, 0, H), dist: 0, timer: 0 };
+      if (G.mobile) drag.timer = setInterval(edgePan, 16);
       cv.style.cursor = 'grabbing';
       cv.setPointerCapture(e.pointerId);
       requestDraw();
-    } else if (mx < G.poolW && my >= 44 && maxScroll() > 0) {
-      drag = { mode: 'scroll', startY: my, startScroll: G.scroll };
+    } else if (inPoolBody(mx, my) && maxScroll() > 0) {
+      drag = { mode: 'scroll', pid: e.pointerId, startX: mx, startY: my, startScroll: G.scroll };
+      cv.setPointerCapture(e.pointerId);
+    } else if (G.mobile && inTA(mx, my)) {
+      drag = { mode: 'pan', pid: e.pointerId, sx: mx, sy: my, vx: G.view.x, vy: G.view.y };
       cv.setPointerCapture(e.pointerId);
     }
   });
+
+  // 拖著片子靠近桌面邊緣時，畫面自動跟著移動（手機）
+  function edgePan() {
+    if (!drag || drag.mode !== 'piece') return;
+    const t = ta(), Z = 38, v = G.view, x = drag.lx, y = drag.ly;
+    if (!inTA(x, y)) return;
+    let px = 0, py = 0;
+    if (x < t.x0 + Z) px = t.x0 + Z - x; else if (x > t.x1 - Z) px = -(x - (t.x1 - Z));
+    if (y < t.y0 + Z) py = t.y0 + Z - y; else if (y > t.y1 - Z) py = -(y - (t.y1 - Z));
+    px *= .25; py *= .25;
+    if (!px && !py) return;
+    const ox = v.x, oy = v.y;
+    v.x += px; v.y += py; clampView();
+    const rx = v.x - ox, ry = v.y - oy;
+    if (!rx && !ry) return;
+    for (const q of drag.members) { q.x -= rx / v.s; q.y -= ry / v.s; }   // 片子留在手指下
+    requestDraw();
+  }
 
   cv.addEventListener('pointermove', e => {
     if (!G) return;
     const [mx0, my0] = pos(e);
+    if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [mx0, my0]);
     hover.x = mx0; hover.y = my0; hover.on = true;
     if (!drag) {
-      cv.style.cursor = hit(mx0, my0) ? 'grab' : 'default';
+      if (e.pointerType === 'mouse') cv.style.cursor = hit(mx0, my0) ? 'grab' : 'default';
       return;
     }
+    if (drag.mode === 'pinch') {
+      const a = ptrs.get(drag.ids[0]), b = ptrs.get(drag.ids[1]);
+      if (!a || !b) return;
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
+      const v = G.view, ns = clamp(drag.s0 * d / drag.d0, .25, 3.5);
+      const wx = (drag.cx0 - drag.vx0) / drag.s0, wy = (drag.cy0 - drag.vy0) / drag.s0;
+      v.s = ns; v.x = cx - wx * ns; v.y = cy - wy * ns;
+      clampView(); requestDraw();
+      return;
+    }
+    if (e.pointerId !== drag.pid) return;
     if (drag.mode === 'scroll') {
-      G.scroll = clamp(drag.startScroll - (my0 - drag.startY), 0, maxScroll());
+      G.scroll = clamp(drag.startScroll - (G.bottom ? mx0 - drag.startX : my0 - drag.startY), 0, maxScroll());
       requestDraw();
       return;
     }
+    if (drag.mode === 'pan') {
+      G.view.x = drag.vx + (mx0 - drag.sx); G.view.y = drag.vy + (my0 - drag.sy);
+      clampView(); requestDraw();
+      return;
+    }
     const mx = clamp(mx0, 0, W), my = clamp(my0, 0, H);
-    const dx = mx - drag.lx, dy = my - drag.ly;
+    const dx = mx - drag.lx, dy = my - drag.ly, s = G.view.s;
     drag.lx = mx; drag.ly = my;
     drag.dist += Math.hypot(dx, dy);
-    for (const q of drag.members) { q.x += dx; q.y += dy; }
+    for (const q of drag.members) { q.x += dx / s; q.y += dy / s; }
     requestDraw();
   });
-
   cv.addEventListener('pointerleave', () => { hover.on = false; });
 
   function endDrag() {
     if (!drag) return;
-    if (drag.mode === 'scroll') { drag = null; return; }
-    const members = drag.members;
-    const mx = drag.lx;
-    if (drag.dist > 6 && !G.done) { G.moves++; showMoves(); }   // 拿起、移動、放下 = 一次
+    const d = drag;
     drag = null;
+    clearInterval(d.timer);
+    if (d.mode !== 'piece') return;
+    const members = d.members, lx = d.lx, ly = d.ly, v = G.view;
+    const tapTol = d.touch ? 10 : 6;
     cv.style.cursor = 'grab';
-    if (mx < G.poolW) {
+    if (d.origin && d.dist <= tapTol) {
+      // 只是點一下拼圖池裡的片：放回原位（進階難度用手指點＝轉）
+      members.forEach((q, i) => { q.x = d.origin.pts[i][0]; q.y = d.origin.pts[i][1]; q.pool = true; });
+      if (d.touch && G.rotOn && !G.done) rotateMembers(members, 1, d.anchor);
+      updateStatus(); requestDraw();
+      return;
+    }
+    if (d.dist > tapTol && !G.done) { G.moves++; showMoves(); }   // 拿起、移動、放下 = 一次
+    if (overPool(lx, ly)) {
+      // 放進拼圖池：保持放開時的位置
+      const a = d.anchor;
+      const [px, py] = screenToPool(a.x * v.s + v.x, a.y * v.s + v.y);
+      const shx = px - a.x, shy = py - a.y;
+      for (const q of members) { q.x += shx; q.y += shy; q.pool = true; }
       nudgeIntoPool(members);
-      for (const q of members) { q.y += G.scroll; q.pool = true; }
       clampScroll();
+    } else if (d.touch && d.dist <= tapTol && G.rotOn && !G.done) {
+      rotateMembers(members, 1, d.anchor);                       // 點一下桌上的片＝轉 90 度
     } else {
       trySnap(members[0].g);
     }
@@ -1149,10 +1546,17 @@
     checkWin();
     requestDraw();
   }
-  cv.addEventListener('pointerup', endDrag);
-  cv.addEventListener('pointercancel', endDrag);
+  function onUp(e) {
+    ptrs.delete(e.pointerId);
+    if (!drag) return;
+    if (drag.mode === 'pinch') { if (drag.ids.includes(e.pointerId)) drag = null; return; }
+    if (e.pointerId !== drag.pid) return;
+    endDrag();
+  }
+  cv.addEventListener('pointerup', onUp);
+  cv.addEventListener('pointercancel', onUp);
 
-  /* ---------- 旋轉（進階難度）：R 鍵、滾輪 ---------- */
+  /* ---------- 旋轉（進階難度）：R 鍵、滾輪、手機點一下 ---------- */
   // 以 (cx, cy) 為中心，把一組拼圖片轉 90 度（dir = 1 順時針、-1 逆時針）
   function rotateSet(members, dir, cx, cy) {
     const h = G.P / 2;
@@ -1168,20 +1572,19 @@
     const a = getCtx(); if (!a) return;
     try { if (a.state === 'suspended') a.resume(); tone(a, 330, 420, .06, .08, 'sine'); } catch (err) { /* ignore */ }
   }
-  function doRotate(dir, mx, my) {
-    if (!G || !G.rotOn || G.done) return;
-    let members, pv;
-    if (drag && drag.mode === 'piece') { members = drag.members; pv = drag.anchor; }
-    else {
-      const p = hit(mx, my);
-      if (!p) return;
-      pv = p; members = G.pieces.filter(q => q.g === p.g);
-    }
+  function rotateMembers(members, dir, pv) {
     rotateSet(members, dir, pv.x + G.P / 2, pv.y + G.P / 2);
     G.moves++; showMoves();
     rotSound();
-    if (!(drag && drag.mode === 'piece') && !pv.pool) { trySnap(pv.g); updateStatus(); checkWin(); }
+    if (!drag && !pv.pool) { trySnap(pv.g); updateStatus(); checkWin(); }
     requestDraw();
+  }
+  function doRotate(dir, mx, my) {
+    if (!G || !G.rotOn || G.done) return;
+    if (drag && drag.mode === 'piece') { rotateMembers(drag.members, dir, drag.anchor); return; }
+    const p = hit(mx, my);
+    if (!p) return;
+    rotateMembers(G.pieces.filter(q => q.g === p.g), dir, p);
   }
   window.addEventListener('keydown', e => {
     if (!G || !G.rotOn || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1197,19 +1600,19 @@
   cv.addEventListener('wheel', e => {
     if (!G) return;
     const [mx, my] = pos(e);
-    if (G.rotOn && !G.done && ((drag && drag.mode === 'piece') || mx >= G.poolW)) {
+    if (G.rotOn && !G.done && ((drag && drag.mode === 'piece') || !overPool(mx, my))) {
       e.preventDefault();
       wheelAcc += e.deltaY * (e.deltaMode === 1 ? 16 : 1);
       const now = performance.now();
       if (Math.abs(wheelAcc) >= 40 && now - wheelAt > 130) {
-        doRotate(wheelAcc > 0 ? 1 : -1, my === undefined ? 0 : mx, my);
+        doRotate(wheelAcc > 0 ? 1 : -1, mx, my);
         wheelAcc = 0; wheelAt = now;
       }
       return;
     }
-    if (mx < G.poolW) {
+    if (overPool(mx, my)) {
       e.preventDefault();
-      G.scroll = clamp(G.scroll + e.deltaY, 0, maxScroll());
+      G.scroll = clamp(G.scroll + (G.bottom ? (e.deltaX || e.deltaY) : e.deltaY), 0, maxScroll());
       requestDraw();
     }
   }, { passive: false });
@@ -1217,14 +1620,20 @@
   // 放進池子時，不要讓片子卡在盒子外面
   function nudgeIntoPool(members) {
     const m = G.m, P = G.P, pw = G.poolW;
-    let minx = Infinity, maxx = -Infinity, miny = Infinity;
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
     for (const q of members) {
-      minx = Math.min(minx, q.x); maxx = Math.max(maxx, q.x + P); miny = Math.min(miny, q.y);
+      minx = Math.min(minx, q.x); maxx = Math.max(maxx, q.x + P); miny = Math.min(miny, q.y); maxy = Math.max(maxy, q.y + P);
     }
     let dx = 0, dy = 0;
-    if (maxx > pw - 8 - m) dx = pw - 8 - m - maxx;
-    if (minx + dx < 8 + m) dx = 8 + m - minx;
-    if (miny < 46 + m) dy = 46 + m - miny;
+    if (G.bottom) {
+      if (minx < 8 + m) dx = 8 + m - minx;
+      if (maxy > G.trayH - m - 2) dy = G.trayH - m - 2 - maxy;
+      if (miny + dy < 24 + m + 2) dy = 24 + m + 2 - miny;
+    } else {
+      if (maxx > pw - 8 - m) dx = pw - 8 - m - maxx;
+      if (minx + dx < 8 + m) dx = 8 + m - minx;
+      if (miny < 46 + m) dy = 46 + m - miny;
+    }
     for (const q of members) { q.x += dx; q.y += dy; }
   }
 
@@ -1233,7 +1642,7 @@
 
   function trySnap(gid) {
     const { P, cols, rows, pieces } = G;
-    const tol = P * SNAP[settings.snap];
+    const tol = P * (SNAP[settings.snap] + (G.mobile ? .06 : 0));   // 手指比較不準，手機版多給一點
     let merged = false, guard = 0;
     while (guard++ < 500) {
       const mem = pieces.filter(q => q.g === gid);
@@ -1321,28 +1730,38 @@
       [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(a, f, f * 1.01, .35, .16, 'sine'), i * 140));
     } catch (err) { /* ignore */ }
   }
+  // 做法和「井」遊戲一樣：低沉的風聲、遠處的水滴、帶井壁般的長回音；只是水滴出現得比較頻繁
+  function reverbImpulse(a, sec, decay) {
+    const len = Math.floor(a.sampleRate * sec), buf = a.createBuffer(2, len, a.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
   function windBuffer(a) {
     const total = a.sampleRate * 8, fade = Math.floor(a.sampleRate * .6), len = total - fade;
     const raw = new Float32Array(total);
     let l = 0;
-    for (let i = 0; i < total; i++) { l = l * .985 + (Math.random() * 2 - 1) * .015; raw[i] = l * 9; }
+    for (let i = 0; i < total; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; raw[i] = l * 3.5; }   // 布朗噪音
     const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = raw[i];
     for (let i = 0; i < fade; i++) { const t = i / fade; d[i] = raw[i] * t + raw[len + i] * (1 - t); }   // 首尾接起來，循環不會有「啪」一聲
     return buf;
   }
   function drop(a, out) {
-    const t = a.currentTime, f = 520 + Math.random() * 520;
+    const t = a.currentTime, f = 650 + Math.random() * 900;
     const o = a.createOscillator(), g = a.createGain();
     o.type = 'sine';
     o.frequency.setValueAtTime(f, t);
-    o.frequency.exponentialRampToValueAtTime(f * 2.1, t + .09);
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(.09, t + .008);
-    g.gain.exponentialRampToValueAtTime(.001, t + .3);
+    o.frequency.exponentialRampToValueAtTime(f * 1.7, t + .09);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(.22, t + .006);
+    g.gain.exponentialRampToValueAtTime(.0001, t + .3);
     o.connect(g); g.connect(out);
     o.start(t); o.stop(t + .35);
   }
+  const MUSIC_VOL = .8;
   function startMusic() {
     if (!settings.music || music) return;
     const a = getCtx(); if (!a) return;
@@ -1351,26 +1770,28 @@
       const t0 = a.currentTime;
       const bus = a.createGain();
       bus.gain.setValueAtTime(0, t0);
-      bus.gain.linearRampToValueAtTime(.9, t0 + 2);          // 慢慢淡入
+      bus.gain.linearRampToValueAtTime(MUSIC_VOL, t0 + 2);     // 慢慢淡入
       bus.connect(a.destination);
-      // 風聲：低頻雜訊，經過濾波，音量和音色都慢慢起伏（像陣風）
-      const src = a.createBufferSource(); src.buffer = windBuffer(a); src.loop = true;
-      const hp = a.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
-      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = .4;
-      const wg = a.createGain(); wg.gain.value = .07;
-      const l1 = a.createOscillator(), l1g = a.createGain(); l1.frequency.value = .09; l1g.gain.value = .04; l1.connect(l1g); l1g.connect(wg.gain);
-      const l2 = a.createOscillator(), l2g = a.createGain(); l2.frequency.value = .05; l2g.gain.value = 300; l2.connect(l2g); l2g.connect(lp.frequency);
-      src.connect(hp); hp.connect(lp); lp.connect(wg); wg.connect(bus);
-      src.start(); l1.start(); l2.start();
-      // 水滴：隨機間隔，帶一點回音
-      const echo = a.createDelay(1); echo.delayTime.value = .27;
-      const fb = a.createGain(); fb.gain.value = .38;
-      const ef = a.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 2400;
+      // 回音（井壁的殘響）
+      const conv = a.createConvolver(); conv.buffer = reverbImpulse(a, 3.4, 2.4);
+      const wet = a.createGain(); wet.gain.value = .9;
+      conv.connect(wet); wet.connect(bus);
       const dropBus = a.createGain();
-      dropBus.connect(bus); dropBus.connect(echo);
-      echo.connect(ef); ef.connect(fb); fb.connect(echo); ef.connect(bus);
-      const m = music = { a, bus, nodes: [src, l1, l2], timer: 0 };
-      const next = () => { m.timer = setTimeout(() => { drop(a, dropBus); next(); }, 1500 + Math.random() * 4500); };
+      const dry = a.createGain(); dry.gain.value = .25;
+      dropBus.connect(dry); dry.connect(bus); dropBus.connect(conv);
+      // 低沉風聲：布朗噪音 → 低通，音量緩慢起伏
+      const src = a.createBufferSource(); src.buffer = windBuffer(a); src.loop = true;
+      const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
+      const wg = a.createGain(); wg.gain.value = .05;
+      const lfo = a.createOscillator(); lfo.frequency.value = .07;
+      const lg = a.createGain(); lg.gain.value = .02;
+      lfo.connect(lg); lg.connect(wg.gain);
+      src.connect(lp); lp.connect(wg); wg.connect(bus);
+      src.start(); lfo.start();
+      const m = music = { a, bus, nodes: [src, lfo], timer: 0 };
+      // 水滴：間隔不規律，約 2～7 秒一滴（「井」遊戲是 8～48 秒）
+      const next = () => { m.timer = setTimeout(() => { drop(a, dropBus); next(); }, 2000 + Math.random() * 5000); };
+      setTimeout(() => { if (music === m) drop(a, dropBus); }, 1200);
       next();
     } catch (err) { music = null; }
   }
@@ -1392,6 +1813,8 @@
   // 瀏覽器規定要先有點擊或按鍵才能出聲，所以「預設開啟」會在玩家第一次操作時開始
   function unlockAudio() { if (settings.music && !music) startMusic(); }
   window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('pointerup', unlockAudio);
+  window.addEventListener('touchend', unlockAudio);
   window.addEventListener('keydown', unlockAudio);
   document.addEventListener('visibilitychange', () => {
     if (!actx) return;
@@ -1402,6 +1825,7 @@
     btnMusic.textContent = settings.music ? '🎵' : '🎵✖';
     btnSound.classList.toggle('on', settings.sfx);
     btnSound.textContent = settings.sfx ? '🔊' : '🔇';
+    btnMusic.dataset.lbl = T('musicS'); btnSound.dataset.lbl = T('sfxS');
   }
 
   /* ---------- 整理拼圖池 ---------- */
@@ -1422,14 +1846,27 @@
     if (mode === 'edges') items.sort((a, b) => (b.big - a.big) || (a.type - b.type));
 
     const gap = P * .22;
-    const left = 8 + m, right = pw - 8 - m;
-    let cx = left, cy = 46 + m, rowH = 0;
-    for (const it of items) {
-      if (cx + it.w > right && cx > left) { cx = left; cy += rowH + gap; rowH = 0; }
-      const dx = cx - it.x0, dy = cy - it.y0;
-      it.mem.forEach(p => { p.x += dx; p.y += dy; });
-      cx += it.w + gap;
-      rowH = Math.max(rowH, it.h);
+    if (G.bottom) {
+      // 下方托盤：先排滿一直行，再換下一行（往右延伸）
+      const top = 24 + m + 4, bot = G.trayH - m - 4;
+      let cx = 12 + m, cy = top, colW = 0;
+      for (const it of items) {
+        if (cy + it.h > bot && cy > top) { cx += colW + gap; cy = top; colW = 0; }
+        const dx = cx - it.x0, dy = cy - it.y0;
+        it.mem.forEach(p => { p.x += dx; p.y += dy; });
+        cy += it.h + gap;
+        colW = Math.max(colW, it.w);
+      }
+    } else {
+      const left = 8 + m, right = pw - 8 - m;
+      let cx = left, cy = 46 + m, rowH = 0;
+      for (const it of items) {
+        if (cx + it.w > right && cx > left) { cx = left; cy += rowH + gap; rowH = 0; }
+        const dx = cx - it.x0, dy = cy - it.y0;
+        it.mem.forEach(p => { p.x += dx; p.y += dy; });
+        cx += it.w + gap;
+        rowH = Math.max(rowH, it.h);
+      }
     }
     G.scroll = 0;
     requestDraw();
@@ -1647,8 +2084,8 @@
   btnSet.addEventListener('click', () => { settingsOv.classList.remove('hidden'); });
   $('settingsDone').addEventListener('click', () => settingsOv.classList.add('hidden'));
   settingsOv.addEventListener('click', e => { if (e.target === settingsOv) settingsOv.classList.add('hidden'); });
-  btnStart.addEventListener('click', startNew);
-  inText.addEventListener('keydown', e => { if (e.key === 'Enter') startNew(); });
+  btnStart.addEventListener('click', () => { document.body.classList.remove('showNew'); startNew(); });
+  inText.addEventListener('keydown', e => { if (e.key === 'Enter') { document.body.classList.remove('showNew'); startNew(); } });
   btnTidy.addEventListener('click', () => tidy('plain'));
   btnEdges.addEventListener('click', () => tidy('edges'));
   btnPreview.addEventListener('click', () => { showPreview = !showPreview; btnPreview.classList.toggle('on', showPreview); requestDraw(); });
@@ -1664,6 +2101,20 @@
   helpOv.addEventListener('click', e => { if (e.target === helpOv) helpOv.classList.add('hidden'); });
   selLevel.addEventListener('change', () => { settings.level = selLevel.value === 'rot' ? 'rot' : 'easy'; saveSettings(); });
   btnRank.addEventListener('click', openRank);
+  // 手機版：下方功能列、面板
+  const body = document.body;
+  const closeSheets = () => body.classList.remove('showNew', 'showMore');
+  $('mNew').addEventListener('click', () => { const on = !body.classList.contains('showNew'); closeSheets(); if (on) body.classList.add('showNew'); });
+  $('mMore').addEventListener('click', () => { const on = !body.classList.contains('showMore'); closeSheets(); if (on) body.classList.add('showMore'); });
+  $('mPool').addEventListener('click', () => { closeSheets(); toggleTray(); });
+  $('mPrev').addEventListener('click', () => { closeSheets(); btnPreview.click(); });
+  $('mTidy').addEventListener('click', () => { closeSheets(); btnTidy.click(); });
+  $('mdim').addEventListener('click', closeSheets);
+  $('btnFit').addEventListener('click', () => { if (G && G.mobile) { fitView(); requestDraw(); } });
+  document.querySelector('.tools').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('button');
+    if (b && ['btnHelp', 'btnRank', 'btnSet', 'btnEdges'].includes(b.id)) closeSheets();
+  });
   $('winRank').addEventListener('click', openRank);
   $('rankDone').addEventListener('click', () => rankOv.classList.add('hidden'));
   rankOv.addEventListener('click', e => { if (e.target === rankOv) rankOv.classList.add('hidden'); });
