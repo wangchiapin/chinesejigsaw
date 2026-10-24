@@ -61,3 +61,7 @@
 - 單一檔案 `index.html`（無需建置），圖片、卡榫與音效全部用 Canvas／Web Audio 即時產生；排行榜用 Firebase（匿名登入＋Firestore）。
 - 部署：GitHub Pages。
 - 華語老師分享區（`cadadiaunosminutos-share-zone`）的遊戲卡片 id 是 `jigsaw`，後台開關是 `game-jigsaw`。
+
+## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
+iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到最上面（Safari 正常）。
+本遊戲整頁固定不捲動（`overflow:hidden`），不受影響，不需要修改。之後若新增可以捲動的畫面，請設 `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`（不要加 `viewport-fit=cover`）並加 `html{color-scheme:light}`（見 game-kit README）。
