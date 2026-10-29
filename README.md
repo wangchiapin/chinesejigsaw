@@ -3,7 +3,7 @@
 > 輸入 1～20 個中文字，自動變成一幅帶卡榫的拼圖，用滑鼠或手指拼回來
 
 - **網址：** https://wangchiapin.github.io/chinesejigsaw/
-- **Firebase 專案：** memorma-24dab（只用在排行榜，集合 `jigsaw_boards`；與 Memorama、收納小達人等共用同一個專案）
+- **Firebase 專案：** memorma-24dab（排行榜集合 `jigsaw_boards`，另外把遊玩紀錄寫到 `plays`、`visits`，遊戲代號 `jigsaw`；與 Memorama、收納小達人等共用同一個專案）
 - **登入方式：** 匿名登入（不用註冊，只在存成績時輸入名字）
 - **狀態：** 使用中
 - **遊戲名稱：** 中文「文字拼圖」／英文「Chinese Jigsaw Puzzle」／西班牙文「Rompecabezas de chino」
@@ -43,7 +43,7 @@
 - 依「拼圖大小」和「難度」分開排：先比完成時間，時間一樣比移動次數；每台裝置每個榜只留最好的成績；不同字數、不同文字放在同一個榜。
 - 資料在 Firestore `jigsaw_boards/{榜名}/entries/{uid}`：榜名 `8`、`10`、`12`、`15` ＝ 輕鬆；`8r`、`10r`、`12r`、`15r` ＝ 進階。
 - 欄位：`name`、`secs`、`moves`、`text`、`rank`（`(99999 − secs) × 10000 + (9999 − moves)`）、`script`、`lang`、`updatedAt`。
-- Firebase 規則（memorama-24dab）要有 `jigsaw_boards` 這一段，包含上面八個榜名，否則存成績會顯示「儲存失敗」（遊戲本身不受影響）。
+- Firebase 規則（memorma-24dab）要有 `jigsaw_boards` 這一段，包含上面八個榜名，否則存成績會顯示「儲存失敗」（遊戲本身不受影響）。
 
 ## 設定（記在玩家瀏覽器）
 - 字體：繁體／简体
@@ -60,6 +60,7 @@
 ## 技術
 - 單一檔案 `index.html`（無需建置），圖片、卡榫與音效全部用 Canvas／Web Audio 即時產生；排行榜用 Firebase（匿名登入＋Firestore）。
 - 部署：GitHub Pages。
+- 分享連結預覽（2026-10-28）：`<head>` 有 Open Graph 標籤，根目錄的 `og.jpg`（1200x630）是貼到 LINE／WhatsApp 時顯示的縮圖；名稱來自 `og:title`「文字拼圖 · Chinese Jigsaw Puzzle」。
 - 華語老師分享區（`cadadiaunosminutos-share-zone`）的遊戲卡片 id 是 `jigsaw`，後台開關是 `game-jigsaw`。
 
 ## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
