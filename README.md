@@ -66,3 +66,12 @@
 ## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
 iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到最上面（Safari 正常）。
 本遊戲整頁固定不捲動（`overflow:hidden`），不受影響，不需要修改。之後若新增可以捲動的畫面，請設 `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`（不要加 `viewport-fit=cover`）並加 `html{color-scheme:light}`（見 game-kit README）。
+
+## 測試
+
+`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers python3 tests/test_game.py`（Python + Playwright；擋掉外部網路，用假的 Firebase 和假的語音，不碰真的資料庫）
+
+- 目前 142 項檢查（2026-10-30 建立）。
+- 涵蓋：真的用滑鼠把 64 片拖完、吸力三檔、進階難度的旋轉（雙擊／R／Shift+R／滾輪）與整張自動轉正、結算與排行榜、尺寸 8／10／12／15、`?m=1/0` 手機電腦版、拼音檔載入失敗、設定每個值。包在 IIFE 裡，所以測試端會補一個「檢查用出入口」（只讀、不改遊戲檔）。
+- 改了遊戲的計分、設定、排行榜或畫面文字後，推上去之前先跑一次。
+- 驗證方式：另外複製一份遊戲、故意改壞一個地方，測試會出現 FAIL。
