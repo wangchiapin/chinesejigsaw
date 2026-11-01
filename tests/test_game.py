@@ -288,6 +288,22 @@ with sync_playwright() as p:
     pg.select_option('#selGrid', '8') if pg.is_visible('#selGrid') else None
     R.check(J(pg, "return J.G.bottom") is True and J(pg, "return J.G.poolW") == 0, '手機直放：拼圖池在下方')
     b.close()
+    # 手機版：「新遊戲」「更多」面板不能被下方選單列（及它下面的版權行）蓋住（直放／橫放各測）
+    for label, w, h in (('直放', 390, 740), ('橫放', 740, 360)):
+        b, pg, errs = page(p, query='?m=1', width=w, height=h)
+        for btn in ('#mNew', '#mMore'):
+            pg.click(btn); pg.wait_for_timeout(300)
+            r = pg.evaluate("""(sel) => {
+                const bar = document.getElementById('mbar').getBoundingClientRect().top;
+                const panel = document.querySelector(sel === '#mNew' ? 'header .setup' : '.tools').getBoundingClientRect();
+                const start = document.getElementById('btnStart').getBoundingClientRect();
+                return {bar, panelBottom: panel.bottom, startBottom: start.bottom};
+            }""", btn)
+            R.check(r['panelBottom'] <= r['bar'] + 1, f'手機{label}：{btn} 面板底部（{r["panelBottom"]:.0f}）沒被選單列（{r["bar"]:.0f}）蓋住')
+            if btn == '#mNew' and label == '直放':
+                R.check(r['startBottom'] <= r['bar'] + 1, f'手機{label}：「開始新遊戲」按鈕（{r["startBottom"]:.0f}）看得到、點得到')
+            pg.click(btn); pg.wait_for_timeout(200)
+        b.close()
 
     # ───── 8) 設定每個值 ─────
     base = {'v': 1, 'script': 'trad', 'lang': 'es', 'phon': 'pinyin', 'rate': 'normal'}

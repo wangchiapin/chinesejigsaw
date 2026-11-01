@@ -76,11 +76,11 @@
   body.m.land header h1 small { display: none; }
   body.m .hrow { flex-wrap: nowrap; }
   body.m .tools {
-    position: fixed; left: 0; right: 0; bottom: var(--mbar); z-index: 40;
+    position: fixed; left: 0; right: 0; bottom: var(--mtop, var(--mbar)); z-index: 40;
     background: #1f2d3a; border-radius: 18px 18px 0 0; padding: 16px 14px 18px;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
     visibility: hidden; box-shadow: 0 -6px 24px rgba(0,0,0,.5);
-    max-height: calc(100dvh - var(--mbar) - 10px); overflow: auto;
+    max-height: calc(100dvh - var(--mtop, var(--mbar)) - 10px); overflow: auto;
   }
   body.m.showMore .tools { visibility: visible; }
   body.m .tools { align-items: stretch; grid-auto-rows: 1fr; }
@@ -98,15 +98,15 @@
   body.m header .setup { display: none; }
   body.m.showNew header .setup {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end;
-    position: fixed; left: 0; right: 0; bottom: var(--mbar); z-index: 40;
+    position: fixed; left: 0; right: 0; bottom: var(--mtop, var(--mbar)); z-index: 40;
     border-radius: 18px 18px 0 0; border: none; border-top: 3px solid #f0a030; padding: 14px 16px 16px;
-    max-height: calc(100dvh - var(--mbar) - 10px); overflow: auto; box-shadow: 0 -6px 24px rgba(0,0,0,.5);
+    max-height: calc(100dvh - var(--mtop, var(--mbar)) - 10px); overflow: auto; box-shadow: 0 -6px 24px rgba(0,0,0,.5);
   }
   body.m header .setup .bigfield { grid-column: 1 / 3; flex: none; min-width: 0; }
   body.m header .setup .sizefield select { width: 100%; }
   body.m header .setup #btnStart { grid-column: 1 / 3; width: 100%; }
   body.m #inText { height: 52px; }
-  body.m #mdim { position: fixed; left: 0; right: 0; top: 0; bottom: var(--mbar); z-index: 39; background: rgba(0,0,0,.5); }
+  body.m #mdim { position: fixed; left: 0; right: 0; top: 0; bottom: var(--mtop, var(--mbar)); z-index: 39; background: rgba(0,0,0,.5); }
   body.m.showNew #mdim, body.m.showMore #mdim { display: block; }
   body.m #mbar {
     display: flex; height: calc(var(--mbar) + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -809,8 +809,16 @@
     if (!m) document.body.classList.remove('showNew', 'showMore');
     return changed;
   }
+  // 選單列下面還有版權那一行，選單列不一定貼在畫面最底；量出它實際的頂端，面板才不會被它蓋住
+  function syncBar() {
+    const bar = document.getElementById('mbar');
+    if (!isMobile || !bar) { document.body.style.removeProperty('--mtop'); return; }
+    const top = bar.getBoundingClientRect().top;
+    if (top > 0) document.body.style.setProperty('--mtop', Math.max(0, Math.round(innerHeight - top)) + 'px');
+  }
   function resize() {
     applyMode();
+    syncBar();
     const r = stage.getBoundingClientRect();
     W = Math.max(isMobile ? 240 : 400, Math.floor(r.width));
     H = Math.max(isMobile ? 240 : 300, Math.floor(r.height));
@@ -2187,8 +2195,8 @@
   // 手機版：下方功能列、面板
   const body = document.body;
   const closeSheets = () => body.classList.remove('showNew', 'showMore');
-  $('mNew').addEventListener('click', () => { const on = !body.classList.contains('showNew'); closeSheets(); if (on) body.classList.add('showNew'); });
-  $('mMore').addEventListener('click', () => { const on = !body.classList.contains('showMore'); closeSheets(); if (on) body.classList.add('showMore'); });
+  $('mNew').addEventListener('click', () => { syncBar(); const on = !body.classList.contains('showNew'); closeSheets(); if (on) body.classList.add('showNew'); });
+  $('mMore').addEventListener('click', () => { syncBar(); const on = !body.classList.contains('showMore'); closeSheets(); if (on) body.classList.add('showMore'); });
   $('mPool').addEventListener('click', () => { closeSheets(); toggleTray(); });
   $('mPrev').addEventListener('click', () => { closeSheets(); btnPreview.click(); });
   $('mTidy').addEventListener('click', () => { closeSheets(); btnTidy.click(); });
