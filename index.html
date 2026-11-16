@@ -198,6 +198,7 @@
   #win h2 { margin: 0 0 10px; font-size: 1.8rem; }
   #win p { margin: 0 0 18px; font-size: 1.1rem; }
   #win button { margin: 0 6px; padding: 8px 18px; }
+  #winShare { background: #fff; border-width: 2px; }
 </style>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="每天一分鐘 · Cada día unos minutos">
@@ -290,6 +291,7 @@
       </div>
       <button id="winRank">🏆 <span data-i="ranking"></span></button>
       <button id="winAgain" class="primary" data-i="again"></button>
+      <button id="winShare" data-i="share"></button>
       <button id="winClose" data-i="close"></button>
     </div>
   </div>
@@ -379,7 +381,7 @@
       winTitle:'🎉 ¡Completado!', winMsg:'Tiempo: ', again:'Jugar otra vez', close:'Ver resultado' }
   };
   const I18N_EXTRA = {
-    'zh-TW': { settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者', langZh:'只有中文',
+    'zh-TW': { share:'分享成績', shareCopied:'已複製', shareFail:'複製失敗', settings:'設定', done:'完成', setScript:'字體', setPhon:'拼音／注音', phonNone:'無', phonBoth:'兩者', langZh:'只有中文',
       textLabel:'✏️ 輸入你想要的拼圖文字（1～20 個字）', time:'時間', moves:'移動次數', ranking:'排行榜', rankTitle:'排行榜 · 前十名',
       rankHint:'每台裝置只留最好成績；先比時間，時間一樣比移動次數。', loading:'載入中…', lbEmpty:'還沒有人上榜，你來當第一個！', lbFail:'無法載入排行榜',
       namePh:'輸入你的名字', save:'存到排行榜', nameErr:'請先輸入名字。', saving:'儲存中…', saved:'已存到排行榜！', saveFail:'儲存失敗，請稍後再試。',
@@ -388,7 +390,7 @@
       phonNote:'拼音／注音從下一局（開始新遊戲）才會套用，需要網路載入資料。',
       pinyinLoading:'拼音資料載入中…', pinyinReady:'資料已就緒，開始新遊戲後套用。', pinyinFail:'資料載入失敗，請確認網路後再試。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'強', snapNote:'弱＝要放得很準；強＝靠近就吸住。' },
-    'zh-CN': { settings:'设定', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者', langZh:'只有中文',
+    'zh-CN': { share:'分享成绩', shareCopied:'已复制', shareFail:'复制失败', settings:'设定', done:'完成', setScript:'字体', setPhon:'拼音／注音', phonNone:'无', phonBoth:'两者', langZh:'只有中文',
       textLabel:'✏️ 输入你想要的拼图文字（1～20 个字）', time:'时间', moves:'移动次数', ranking:'排行榜', rankTitle:'排行榜 · 前十名',
       rankHint:'每台装置只留最好成绩；先比时间，时间一样比移动次数。', loading:'载入中…', lbEmpty:'还没有人上榜，你来当第一个！', lbFail:'无法载入排行榜',
       namePh:'输入你的名字', save:'存到排行榜', nameErr:'请先输入名字。', saving:'储存中…', saved:'已存到排行榜！', saveFail:'储存失败，请稍后再试。',
@@ -397,7 +399,7 @@
       phonNote:'拼音／注音从下一局（开始新游戏）才会套用，需要网路载入资料。',
       pinyinLoading:'拼音资料载入中…', pinyinReady:'资料已就绪，开始新游戏后套用。', pinyinFail:'资料载入失败，请确认网路后再试。',
       snap:'接合吸力', snapWeak:'弱', snapMid:'中', snapStrong:'强', snapNote:'弱＝要放得很准；强＝靠近就吸住。' },
-    'en': { settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both', langZh:'Chinese only',
+    'en': { share:'Share result', shareCopied:'Copied', shareFail:'Copy failed', settings:'Settings', done:'Done', setScript:'Characters', setPhon:'Pinyin / Zhuyin', phonNone:'None', phonBoth:'Both', langZh:'Chinese only',
       textLabel:'✏️ Type the text you want for your puzzle (1–20 characters)', time:'Time', moves:'Moves', ranking:'Ranking', rankTitle:'Ranking · Top 10',
       rankHint:'One best result per device; ranked by time, then by moves.', loading:'Loading…', lbEmpty:'No one is on the ranking yet. Be the first!', lbFail:'Could not load the ranking',
       namePh:'Your name', save:'Save to ranking', nameErr:'Enter your name first.', saving:'Saving…', saved:'Saved to the ranking!', saveFail:'Could not save. Please try again.',
@@ -406,7 +408,7 @@
       phonNote:'Pinyin / zhuyin apply from the next game and need internet to load.',
       pinyinLoading:'Loading data…', pinyinReady:'Ready. It applies when you start a new game.', pinyinFail:'Could not load data. Check your connection and try again.',
       snap:'Snap strength', snapWeak:'Weak', snapMid:'Medium', snapStrong:'Strong', snapNote:'Weak = place precisely; strong = snaps when close.' },
-    'es': { settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos', langZh:'Solo chino',
+    'es': { share:'Compartir resultado', shareCopied:'Copiado', shareFail:'No se pudo copiar', settings:'Ajustes', done:'Listo', setScript:'Caracteres', setPhon:'Pinyin / Zhuyin', phonNone:'Ninguno', phonBoth:'Ambos', langZh:'Solo chino',
       textLabel:'✏️ Escribe el texto que quieres para tu rompecabezas (1–20 caracteres)', time:'Tiempo', moves:'Movimientos', ranking:'Ranking', rankTitle:'Ranking · Top 10',
       rankHint:'Un mejor resultado por dispositivo; se ordena por tiempo y luego por movimientos.', loading:'Cargando…', lbEmpty:'Todavía no hay nadie en el ranking. ¡Sé el primero!', lbFail:'No se pudo cargar el ranking',
       namePh:'Tu nombre', save:'Guardar en el ranking', nameErr:'Escribe tu nombre primero.', saving:'Guardando…', saved:'¡Guardado en el ranking!', saveFail:'No se pudo guardar. Inténtalo de nuevo.',
@@ -2043,6 +2045,57 @@
   const rankOf = (secs, moves) => (99999 - secs) * 10000 + (9999 - moves);
   const fill = (str, v) => String(str).replace('{t}', v.t).replace('{m}', v.m);
 
+/* =========================================================
+     分享成績（統一規則見 game-kit parts/share.js：完成畫面「再玩一次」之後、「看看成品」之前，空心外框）
+     這個遊戲只有拼完才有完成畫面，所以分享鈕一定有成績（時間＋移動次數）
+     ========================================================= */
+  /* SHARE-BEGIN（HGShare：來自 game-kit parts/share.js） */
+  const HGShare = (() => {
+    async function copyText(s) {
+      try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(s); return true; } } catch (e) {}
+      try {
+        const ta = document.createElement('textarea'); ta.value = s; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        const r = document.execCommand('copy'); ta.remove(); return !!r;
+      } catch (e) { return false; }
+    }
+    async function send({ title, text, url }) {
+      if (navigator.share) {
+        try { await navigator.share({ title, text, url }); return 'shared'; }
+        catch (e) { if (e && e.name === 'AbortError') return 'aborted'; }   // 其他錯誤改走複製
+      }
+      return (await copyText(text + '\n' + url)) ? 'copied' : 'failed';
+    }
+    return { copyText, send };
+  })();
+  /* SHARE-END */
+  const SHARE_URL = 'https://wangchiapin.github.io/chinesejigsaw/?ref=share';   // 公開頁＋分享記號
+  const SHARE_MSG = {
+    tw: (p, t, m, n) => (p || '我') + '在「文字拼圖」用 ' + t + '、移動 ' + m + ' 次，拼好了 ' + n + ' 片的拼圖！你也來試試',
+    cn: (p, t, m, n) => (p || '我') + '在「文字拼图」用 ' + t + '、移动 ' + m + ' 次，拼好了 ' + n + ' 片的拼图！你也来试试',
+    es: (p, t, m, n) => (p ? p + ' completó' : '¡Completé') + ' un rompecabezas de ' + n + ' piezas en «Rompecabezas de chino» en ' + t + ' con ' + m + ' movimientos' + (p ? '' : '!') + ' Inténtalo tú también',
+    en: (p, t, m, n) => (p ? p + ' finished' : 'I finished') + ' a ' + n + '-piece puzzle in "Chinese Jigsaw Puzzle" in ' + t + ' with ' + m + ' moves! Try it too'
+  };
+  let shareBusy = false, shareTimer = 0;
+  $('winShare').addEventListener('click', async () => {
+    if (shareBusy || !G || !G.done) return;
+    shareBusy = true;
+    try {
+      let p = nameInput.value.trim();
+      if (!p) { try { p = (localStorage.getItem('jigsaw_name') || '').trim(); } catch (e) { /* ignore */ } }
+      p = p.slice(0, 14);
+      const code = settings.lang === 'es' ? 'es' : settings.lang === 'en' ? 'en' : (settings.script === 'simp' ? 'cn' : 'tw');
+      const text = SHARE_MSG[code](p, fmt(G.elapsed), G.moves, G.N);
+      const r = await HGShare.send({ title: I18N[zhKey()].title + ' · Chinese Jigsaw Puzzle', text, url: SHARE_URL });
+      if (r === 'copied' || r === 'failed') {
+        setBi($('winShare'), r === 'copied' ? 'shareCopied' : 'shareFail');
+        clearTimeout(shareTimer);
+        shareTimer = setTimeout(() => { shareTimer = 0; setBi($('winShare'), 'share'); }, 2200);
+      }
+    } finally { shareBusy = false; }
+  });
+
   function renderWinMsg() {
     if (!G) return;
     const w = bi('winMsg'), mv = bi('moves');
@@ -2317,6 +2370,18 @@
     try { return String(Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 64); } catch (e) { return ''; }
   }
   var TZ = tzName();
+  /* ref：這個訪客是從哪裡進來的記號（例如 ?ref=share＝朋友分享的連結）。
+     只收英數字、底線、連字號，最長 16 字，統一小寫；其他一律忽略（規則也限制 1～16 字串）。
+     網址有 ?ref= 就記下並暫存在這個分頁（sessionStorage，同分頁的 iframe 讀得到、分頁關掉就消失）；
+     沒有就讀暫存。所以「首頁收到記號、遊戲頁（iframe）才寫紀錄」也記得到。 */
+  function cleanRef(x) { x = String(x == null ? '' : x).trim().toLowerCase(); return /^[a-z0-9_-]{1,16}$/.test(x) ? x : ''; }
+  function refName() {
+    var r = '';
+    try { r = cleanRef(new URLSearchParams(location.search).get('ref')); } catch (e) {}
+    try { if (r) sessionStorage.setItem('hg.ref', r); else r = cleanRef(sessionStorage.getItem('hg.ref')); } catch (e) {}
+    return r;
+  }
+  var REF = refName();
 
   function gid() { try { return (HG.gameFn ? HG.gameFn() : GAME) || GAME; } catch (e) { return GAME; } } // taiwan-life 這類共用引擎的遊戲可改寫 HGPlays.gameFn
   function day() { // 以台灣時間（UTC+8）算「哪一天」，方便老師對帳
@@ -2358,6 +2423,7 @@
         var id = d + '_' + g + '_' + L.uid;
         var v = { game: g, day: d, uid: L.uid, at: L.F.serverTimestamp() };
         if (TZ) v.tz = TZ;
+        if (REF) v.ref = REF;
         return L.F.setDoc(L.F.doc(L.db, 'visits', id), v)
           .then(function () { ls(key, d); });
       }).catch(function () {});
@@ -2370,6 +2436,7 @@
         var data = { game: gid(), level: mine.level, uid: L.uid, name: getName(name), day: day(),
                      startedAt: L.F.serverTimestamp(), done: false };
         if (TZ) data.tz = TZ;
+        if (REF) data.ref = REF;
         return L.F.addDoc(L.F.collection(L.db, 'plays'), data).then(function (ref) {
           mine.id = ref.id; if (mine.pendingEnd) HG._finish(mine, mine.pendingEnd);
         });
